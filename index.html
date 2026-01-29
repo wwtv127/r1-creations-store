@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>R1 Creation Selector</title>
+    <style>
+        :root {
+            --r1-orange: #ff4e00;
+            --r1-black: #000000;
+            --r1-white: #ffffff;
+            --r1-gray: #1a1a1a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            width: 240px;
+            height: 282px;
+            background-color: var(--r1-black);
+            color: var(--r1-white);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            background: linear-gradient(to bottom, #111, #000);
+            border-bottom: 1px solid #333;
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--r1-orange);
+        }
+
+        #list-container {
+            flex-grow: 1;
+            overflow: hidden;
+            position: relative;
+            padding: 10px 0;
+        }
+
+        .creation-item {
+            height: 50px;
+            margin: 5px 10px;
+            padding: 0 15px;
+            display: flex;
+            align-items: center;
+            border-radius: 8px;
+            background-color: var(--r1-gray);
+            transition: transform 0.1s ease, background-color 0.2s ease;
+            border: 2px solid transparent;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .creation-item.active {
+            background-color: var(--r1-orange);
+            color: var(--r1-black);
+            transform: scale(1.05);
+            border-color: rgba(255, 255, 255, 0.3);
+            z-index: 10;
+        }
+
+        .footer-hint {
+            height: 25px;
+            font-size: 9px;
+            color: #666;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #050505;
+            text-transform: uppercase;
+        }
+
+        .loading-state {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            font-size: 12px;
+            color: var(--r1-orange);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Creations</h1>
+    </div>
+
+    <div id="list-container">
+        <div class="loading-state">Loading...</div>
+    </div>
+
+    <div class="footer-hint">
+        Scroll to move • Side Button to Open
+    </div>
+
+    <script>
+        /**
+         * R1 CREATIONS DATA
+         * Fetched dynamically from external source
+         */
+        let creations = [];
+        let selectedIndex = 0;
+        const container = document.getElementById('list-container');
+        const DATA_URL = "https://wwtv127.github.io/r1-creations-store/array.txt";
+
+        async function fetchCreations() {
+            try {
+                const response = await fetch(DATA_URL);
+                if (!response.ok) throw new Error('Network response was not ok');
+                
+                // Assuming the txt file contains valid JSON array text
+                const text = await response.text();
+                creations = JSON.parse(text);
+                
+                renderList();
+            } catch (error) {
+                console.error("Failed to fetch creations:", error);
+                container.innerHTML = '<div class="loading-state" style="color:red">Error loading list</div>';
+            }
+        }
+
+        function renderList() {
+            if (creations.length === 0) {
+                container.innerHTML = '<div class="loading-state">No creations found</div>';
+                return;
+            }
+
+            container.innerHTML = '';
+            creations.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = `creation-item ${index === selectedIndex ? 'active' : ''}`;
+                div.innerText = item.title;
+                div.id = `item-${index}`;
+                container.appendChild(div);
+            });
+            
+            const activeEl = document.getElementById(`item-${selectedIndex}`);
+            if (activeEl) {
+                activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function updateSelection(direction) {
+            if (creations.length === 0) return;
+            
+            if (direction === 'up' && selectedIndex > 0) {
+                selectedIndex--;
+            } else if (direction === 'down' && selectedIndex < creations.length - 1) {
+                selectedIndex++;
+            }
+            renderList();
+        }
+
+        function launchSelected() {
+            if (creations.length === 0) return;
+
+            const target = creations[selectedIndex];
+            if (target && target.url) {
+                const activeEl = document.getElementById(`item-${selectedIndex}`);
+                if (activeEl) activeEl.style.backgroundColor = '#ffffff';
+                
+                setTimeout(() => {
+                    window.location.href = target.url;
+                }, 150);
+            }
+        }
+
+        // --- RABBIT R1 HARDWARE EVENT LISTENERS ---
+
+        window.addEventListener("scrollUp", () => {
+            updateSelection('up');
+        });
+
+        window.addEventListener("scrollDown", () => {
+            updateSelection('down');
+        });
+
+        window.addEventListener("sideClick", () => {
+            launchSelected();
+        });
+
+        // Initial Load
+        window.onload = () => {
+            fetchCreations();
+        };
+
+        // Standard Keyboard Fallback
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp') updateSelection('up');
+            if (e.key === 'ArrowDown') updateSelection('down');
+            if (e.key === 'Enter') launchSelected();
+        });
+
+    </script>
+</body>
+</html>
