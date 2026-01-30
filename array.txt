@@ -1,6 +1,7 @@
 [
     {
         "title": "YouTube",
-        "url": "https://wwtv127.github.io/gist-previewer/?gist=https://gist.github.com/wwtv127/14813d645c7f72b2ffd382c71442076f"
+        "url": "https://wwtv127.github.io/gist-previewer/?gist=https://gist.github.com/wwtv127/14813d645c7f72b2ffd382c71442076f",
+        "author": "Wwtv"
     }
 ]
