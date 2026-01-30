@@ -267,25 +267,56 @@
         const secondaryBtn = document.getElementById('secondary-action');
 
         window.onload = async () => {
+            // Try to load immediately, then try again after a short delay
+            // because creationStorage injection can be asynchronous on R1 hardware.
             await loadInventory();
+            setTimeout(async () => {
+                if (inventory.length === 0) await loadInventory();
+            }, 500);
             await fetchShopItems();
         };
 
         async function loadInventory() {
             try {
+                let data = null;
+                
+                // 1. Try Rabbit R1 creationStorage
                 if (window.creationStorage) {
-                    const data = await window.creationStorage.plain.getItem('my_creations');
-                    if (data) inventory = JSON.parse(atob(data));
+                    data = await window.creationStorage.plain.getItem('my_creations');
+                } 
+                
+                // 2. Fallback to localStorage if hardware storage is missing/empty
+                if (!data) {
+                    data = localStorage.getItem('my_creations_backup');
                 }
-            } catch (e) { console.error("Storage error", e); }
+
+                if (data) {
+                    const parsed = JSON.parse(atob(data));
+                    if (Array.isArray(parsed)) {
+                        inventory = parsed;
+                        // Keep fallback in sync
+                        localStorage.setItem('my_creations_backup', data);
+                    }
+                }
+            } catch (e) { 
+                console.error("Storage load error", e); 
+            }
         }
 
         async function saveInventory() {
             try {
+                const dataString = btoa(JSON.stringify(inventory));
+                
+                // 1. Save to R1 Hardware Storage
                 if (window.creationStorage) {
-                    await window.creationStorage.plain.setItem('my_creations', btoa(JSON.stringify(inventory)));
+                    await window.creationStorage.plain.setItem('my_creations', dataString);
                 }
-            } catch (e) { console.error("Storage error", e); }
+                
+                // 2. Immediate Backup to LocalStorage (more reliable across minor flickers)
+                localStorage.setItem('my_creations_backup', dataString);
+            } catch (e) { 
+                console.error("Storage save error", e); 
+            }
         }
 
         async function fetchShopItems() {
