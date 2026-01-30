@@ -9,7 +9,9 @@
             --r1-orange: #ff4e00;
             --r1-black: #000000;
             --r1-white: #ffffff;
-            --r1-gray: #1a1a1a;
+            --r1-gray: #151515;
+            --r1-dark-gray: #0a0a0a;
+            --r1-border: #222;
         }
 
         * {
@@ -30,190 +32,430 @@
             flex-direction: column;
         }
 
-        .header {
+        .tabs {
             height: 40px;
             display: flex;
-            align-items: center;
-            padding: 0 15px;
-            background: linear-gradient(to bottom, #111, #000);
-            border-bottom: 1px solid #333;
+            background: var(--r1-dark-gray);
+            border-bottom: 1px solid var(--r1-border);
             flex-shrink: 0;
         }
 
-        .header h1 {
-            font-size: 14px;
-            font-weight: 600;
+        .tab {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 10px;
+            font-weight: 800;
             text-transform: uppercase;
+            color: #555;
             letter-spacing: 1px;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .tab.active {
             color: var(--r1-orange);
+            background: linear-gradient(to bottom, transparent, rgba(255, 78, 0, 0.05));
+            box-shadow: inset 0 -2px 0 var(--r1-orange);
         }
 
         #list-container {
             flex-grow: 1;
             overflow: hidden;
             position: relative;
-            padding: 10px 0;
+            padding: 8px 0;
         }
 
         .creation-item {
-            height: 50px;
-            margin: 5px 10px;
-            padding: 0 15px;
+            height: 52px;
+            margin: 4px 10px;
+            padding: 0 12px;
             display: flex;
             align-items: center;
-            border-radius: 8px;
+            justify-content: space-between;
+            border-radius: 10px;
             background-color: var(--r1-gray);
-            transition: transform 0.1s ease, background-color 0.2s ease;
-            border: 2px solid transparent;
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--r1-border);
+        }
+
+        .item-text {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            max-width: 160px;
+        }
+
+        .creation-item .title {
             font-size: 13px;
-            font-weight: 500;
+            font-weight: 600;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
+        .creation-item .author {
+            font-size: 9px;
+            opacity: 0.5;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 1px;
+        }
+
+        .item-icon {
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #222;
+            font-size: 12px;
+            font-weight: bold;
+            color: #666;
+            flex-shrink: 0;
+        }
+
         .creation-item.active {
             background-color: var(--r1-orange);
             color: var(--r1-black);
+            transform: scale(1.02);
+            border-color: rgba(255,255,255,0.2);
+            box-shadow: 0 4px 12px rgba(255, 78, 0, 0.3);
+        }
+
+        .creation-item.active .author {
+            color: var(--r1-black);
+            opacity: 0.7;
+        }
+
+        .creation-item.active .item-icon {
+            background: var(--r1-black);
+            color: var(--r1-orange);
+        }
+
+        #detail-view {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: none;
+            flex-direction: column;
+            z-index: 100;
+            padding: 24px;
+            text-align: center;
+            backdrop-filter: blur(5px);
+        }
+
+        #detail-view h2 {
+            font-size: 18px;
+            margin-top: 25px;
+            margin-bottom: 4px;
+            color: var(--r1-orange);
+            line-height: 1.2;
+        }
+
+        #detail-author {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .action-btn {
+            background: #111;
+            color: white;
+            border: 1px solid #333;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            transition: all 0.1s ease;
+        }
+
+        .action-btn.selected {
+            background: var(--r1-orange);
+            color: black !important;
+            border-color: var(--r1-orange);
             transform: scale(1.05);
-            border-color: rgba(255, 255, 255, 0.3);
-            z-index: 10;
         }
 
         .footer-hint {
-            height: 25px;
-            font-size: 9px;
-            color: #666;
+            height: 24px;
+            font-size: 8px;
+            color: #444;
             text-align: center;
             display: flex;
             justify-content: center;
             align-items: center;
-            background: #050505;
+            background: var(--r1-dark-gray);
             text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-top: 1px solid var(--r1-border);
         }
 
         .loading-state {
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100%;
-            font-size: 12px;
+            font-size: 11px;
             color: var(--r1-orange);
+            gap: 10px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 78, 0, 0.2);
+            border-top-color: var(--r1-orange);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>Creations</h1>
+    <div class="tabs">
+        <div id="tab-shop" class="tab active" onclick="setTab('shop')">Shop</div>
+        <div id="tab-inv" class="tab" onclick="setTab('inventory')">Inventory</div>
     </div>
 
     <div id="list-container">
-        <div class="loading-state">Loading...</div>
+        <div class="loading-state">
+            <div class="spinner"></div>
+            Loading...
+        </div>
     </div>
 
-    <div class="footer-hint">
-        Scroll to move • Side Button to Open
+    <div id="detail-view">
+        <h2 id="detail-title">App Name</h2>
+        <div id="detail-author">by Author</div>
+        <div id="primary-action" class="action-btn selected">Get</div>
+        <div id="secondary-action" class="action-btn">Back</div>
+    </div>
+
+    <div class="footer-hint" id="hint-text">
+        Scroll to browse • Side click to select
     </div>
 
     <script>
-        /**
-         * R1 CREATIONS DATA
-         * Fetched dynamically from external source
-         */
-        let creations = [];
-        let selectedIndex = 0;
-        const container = document.getElementById('list-container');
         const DATA_URL = "https://wwtv127.github.io/r1-creations-store/array.txt";
+        let shopItems = [];
+        let inventory = [];
+        let currentTab = 'shop'; 
+        let selectedIndex = 0;
+        let isDetailView = false;
+        let detailSelection = 0;
 
-        async function fetchCreations() {
+        const container = document.getElementById('list-container');
+        const detailView = document.getElementById('detail-view');
+        const detailTitle = document.getElementById('detail-title');
+        const detailAuthor = document.getElementById('detail-author');
+        const primaryBtn = document.getElementById('primary-action');
+        const secondaryBtn = document.getElementById('secondary-action');
+
+        window.onload = async () => {
+            await loadInventory();
+            await fetchShopItems();
+        };
+
+        async function loadInventory() {
+            try {
+                if (window.creationStorage) {
+                    const data = await window.creationStorage.plain.getItem('my_creations');
+                    if (data) inventory = JSON.parse(atob(data));
+                }
+            } catch (e) { console.error("Storage error", e); }
+        }
+
+        async function saveInventory() {
+            try {
+                if (window.creationStorage) {
+                    await window.creationStorage.plain.setItem('my_creations', btoa(JSON.stringify(inventory)));
+                }
+            } catch (e) { console.error("Storage error", e); }
+        }
+
+        async function fetchShopItems() {
             try {
                 const response = await fetch(DATA_URL);
-                if (!response.ok) throw new Error('Network response was not ok');
-                
-                // Assuming the txt file contains valid JSON array text
                 const text = await response.text();
-                creations = JSON.parse(text);
-                
+                shopItems = JSON.parse(text);
                 renderList();
             } catch (error) {
-                console.error("Failed to fetch creations:", error);
-                container.innerHTML = '<div class="loading-state" style="color:red">Error loading list</div>';
+                container.innerHTML = '<div class="loading-state" style="color:red">Failed to connect</div>';
             }
+        }
+
+        function setTab(tabName) {
+            if (isDetailView) return;
+            currentTab = tabName;
+            selectedIndex = 0;
+            document.getElementById('tab-shop').classList.toggle('active', currentTab === 'shop');
+            document.getElementById('tab-inv').classList.toggle('active', currentTab === 'inventory');
+            renderList();
         }
 
         function renderList() {
-            if (creations.length === 0) {
-                container.innerHTML = '<div class="loading-state">No creations found</div>';
+            container.innerHTML = '';
+            const list = currentTab === 'shop' ? shopItems : inventory;
+
+            if (list.length === 0) {
+                container.innerHTML = `<div class="loading-state">${currentTab === 'shop' ? 'No items in shop' : 'Inventory is empty'}</div>`;
                 return;
             }
 
-            container.innerHTML = '';
-            creations.forEach((item, index) => {
+            list.forEach((item, index) => {
                 const div = document.createElement('div');
                 div.className = `creation-item ${index === selectedIndex ? 'active' : ''}`;
-                div.innerText = item.title;
                 div.id = `item-${index}`;
+                
+                const textWrapper = document.createElement('div');
+                textWrapper.className = 'item-text';
+
+                const title = document.createElement('div');
+                title.className = 'title';
+                title.innerText = item.title;
+
+                const author = document.createElement('div');
+                author.className = 'author';
+                author.innerText = item.author ? `by ${item.author}` : '';
+                
+                textWrapper.appendChild(title);
+                textWrapper.appendChild(author);
+
+                const icon = document.createElement('div');
+                icon.className = 'item-icon';
+                if (currentTab === 'shop') {
+                    const isInstalled = inventory.some(i => i.url === item.url);
+                    icon.innerText = isInstalled ? '✓' : '+';
+                } else {
+                    icon.innerText = '▶';
+                }
+                
+                div.appendChild(textWrapper);
+                div.appendChild(icon);
                 container.appendChild(div);
             });
-            
+
             const activeEl = document.getElementById(`item-${selectedIndex}`);
-            if (activeEl) {
-                activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
+            if (activeEl) activeEl.scrollIntoView({ behavior: 'auto', block: 'center' });
         }
 
         function updateSelection(direction) {
-            if (creations.length === 0) return;
+            const list = currentTab === 'shop' ? shopItems : inventory;
+            if (list.length === 0 && !isDetailView) return;
             
+            if (isDetailView) {
+                detailSelection = detailSelection === 0 ? 1 : 0;
+                updateDetailUI();
+                return;
+            }
+
             if (direction === 'up' && selectedIndex > 0) {
                 selectedIndex--;
-            } else if (direction === 'down' && selectedIndex < creations.length - 1) {
+            } else if (direction === 'down' && selectedIndex < list.length - 1) {
                 selectedIndex++;
             }
             renderList();
         }
 
-        function launchSelected() {
-            if (creations.length === 0) return;
+        function handleAction() {
+            const list = currentTab === 'shop' ? shopItems : inventory;
+            if (list.length === 0) return;
 
-            const target = creations[selectedIndex];
-            if (target && target.url) {
-                const activeEl = document.getElementById(`item-${selectedIndex}`);
-                if (activeEl) activeEl.style.backgroundColor = '#ffffff';
-                
-                setTimeout(() => {
-                    window.location.href = target.url;
-                }, 150);
+            const item = list[selectedIndex];
+
+            if (!isDetailView) {
+                openDetail(item);
+            } else {
+                if (detailSelection === 1 && currentTab === 'shop') {
+                    closeDetail(); 
+                } else {
+                    executePrimaryAction(item);
+                }
             }
         }
 
-        // --- RABBIT R1 HARDWARE EVENT LISTENERS ---
+        function openDetail(item) {
+            isDetailView = true;
+            detailSelection = 0;
+            detailTitle.innerText = item.title;
+            detailAuthor.innerText = item.author ? `by ${item.author}` : '';
+            
+            const isInstalled = inventory.some(i => i.url === item.url);
+            
+            if (currentTab === 'shop') {
+                primaryBtn.innerText = isInstalled ? "Deinstall" : "Install";
+                secondaryBtn.innerText = "Back";
+                secondaryBtn.style.color = "#888";
+            } else {
+                primaryBtn.innerText = "Open App";
+                secondaryBtn.innerText = "Delete";
+                secondaryBtn.style.color = "var(--r1-orange)";
+            }
+            
+            detailView.style.display = 'flex';
+            updateDetailUI();
+        }
 
-        window.addEventListener("scrollUp", () => {
-            updateSelection('up');
-        });
+        function updateDetailUI() {
+            primaryBtn.classList.toggle('selected', detailSelection === 0);
+            secondaryBtn.classList.toggle('selected', detailSelection === 1);
+        }
 
-        window.addEventListener("scrollDown", () => {
-            updateSelection('down');
-        });
+        function closeDetail() {
+            isDetailView = false;
+            detailView.style.display = 'none';
+            renderList();
+        }
 
-        window.addEventListener("sideClick", () => {
-            launchSelected();
-        });
+        async function executePrimaryAction(item) {
+            const installedIndex = inventory.findIndex(i => i.url === item.url);
+            
+            if (currentTab === 'shop') {
+                if (installedIndex > -1) {
+                    inventory.splice(installedIndex, 1);
+                } else {
+                    inventory.push(item);
+                }
+                await saveInventory();
+                closeDetail();
+            } else {
+                if (detailSelection === 0) {
+                    window.location.href = item.url;
+                } else {
+                    if (installedIndex > -1) {
+                        inventory.splice(installedIndex, 1);
+                        await saveInventory();
+                    }
+                    selectedIndex = 0;
+                    closeDetail();
+                }
+            }
+        }
 
-        // Initial Load
-        window.onload = () => {
-            fetchCreations();
-        };
+        window.addEventListener("scrollUp", () => updateSelection('up'));
+        window.addEventListener("scrollDown", () => updateSelection('down'));
+        window.addEventListener("sideClick", () => handleAction());
 
-        // Standard Keyboard Fallback
         window.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowUp') updateSelection('up');
             if (e.key === 'ArrowDown') updateSelection('down');
-            if (e.key === 'Enter') launchSelected();
+            if (e.key === 'Enter') handleAction();
         });
-
     </script>
 </body>
 </html>
