@@ -6,12 +6,12 @@
     <title>R1 Creation Selector</title>
     <style>
         :root {
-            --r1-orange: #ff4e00;
-            --r1-black: #000000;
-            --r1-white: #ffffff;
-            --r1-gray: #151515;
-            --r1-dark-gray: #0a0a0a;
-            --r1-border: #222;
+            --eshop-orange: #ff6d00;
+            --eshop-light-orange: #fff3e0;
+            --eshop-white: #ffffff;
+            --eshop-gray: #f2f2f2;
+            --eshop-text: #444444;
+            --eshop-border: #e0e0e0;
         }
 
         * {
@@ -24,8 +24,8 @@
         body {
             width: 240px;
             height: 282px;
-            background-color: var(--r1-black);
-            color: var(--r1-white);
+            background-color: var(--eshop-white);
+            color: var(--eshop-text);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             overflow: hidden;
             display: flex;
@@ -33,11 +33,12 @@
         }
 
         .tabs {
-            height: 40px;
+            height: 44px;
             display: flex;
-            background: var(--r1-dark-gray);
-            border-bottom: 1px solid var(--r1-border);
+            background: var(--eshop-orange);
             flex-shrink: 0;
+            padding: 4px;
+            gap: 4px;
         }
 
         .tab {
@@ -48,16 +49,16 @@
             font-size: 10px;
             font-weight: 800;
             text-transform: uppercase;
-            color: #555;
-            letter-spacing: 1px;
+            color: rgba(255,255,255,0.7);
             cursor: pointer;
-            transition: color 0.2s ease;
+            border-radius: 8px;
+            transition: all 0.2s ease;
         }
 
         .tab.active {
-            color: var(--r1-orange);
-            background: linear-gradient(to bottom, transparent, rgba(255, 78, 0, 0.05));
-            box-shadow: inset 0 -2px 0 var(--r1-orange);
+            color: var(--eshop-orange);
+            background: var(--eshop-white);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         #list-container {
@@ -65,31 +66,34 @@
             overflow: hidden;
             position: relative;
             padding: 8px 0;
+            background: radial-gradient(circle, #ffffff 0%, #fffbf5 100%);
         }
 
         .creation-item {
-            height: 52px;
-            margin: 4px 10px;
-            padding: 0 12px;
+            height: 54px;
+            margin: 6px 10px;
+            padding: 0 14px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-radius: 10px;
-            background-color: var(--r1-gray);
-            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid var(--r1-border);
+            border-radius: 15px;
+            background-color: var(--eshop-white);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid var(--eshop-border);
+            box-shadow: 0 2px 0 var(--eshop-border);
         }
 
         .item-text {
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            max-width: 160px;
+            max-width: 155px;
         }
 
         .creation-item .title {
             font-size: 13px;
-            font-weight: 600;
+            font-weight: 700;
+            color: var(--eshop-orange);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -97,43 +101,49 @@
 
         .creation-item .author {
             font-size: 9px;
-            opacity: 0.5;
+            color: #999;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             margin-top: 1px;
+            font-weight: 500;
         }
 
         .item-icon {
-            width: 18px;
-            height: 18px;
+            width: 22px;
+            height: 22px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 50%;
-            background: #222;
+            border-radius: 8px;
+            background: var(--eshop-gray);
             font-size: 12px;
             font-weight: bold;
-            color: #666;
+            color: var(--eshop-orange);
             flex-shrink: 0;
+            box-shadow: inset 0 -2px 0 #ccc;
         }
 
         .creation-item.active {
-            background-color: var(--r1-orange);
-            color: var(--r1-black);
-            transform: scale(1.02);
-            border-color: rgba(255,255,255,0.2);
-            box-shadow: 0 4px 12px rgba(255, 78, 0, 0.3);
+            background-color: var(--eshop-white);
+            border-color: var(--eshop-orange);
+            box-shadow: 0 4px 0 var(--eshop-orange), 0 8px 15px rgba(255, 109, 0, 0.2);
+            transform: translateY(-2px);
+            z-index: 10;
+        }
+
+        .creation-item.active .title {
+            color: var(--eshop-orange);
         }
 
         .creation-item.active .author {
-            color: var(--r1-black);
-            opacity: 0.7;
+            color: #666;
         }
 
         .creation-item.active .item-icon {
-            background: var(--r1-black);
-            color: var(--r1-orange);
+            background: var(--eshop-light-orange);
+            color: var(--eshop-orange);
+            box-shadow: inset 0 -2px 0 #ffccbc;
         }
 
         #detail-view {
@@ -142,62 +152,65 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.95);
+            background: var(--eshop-light-orange);
             display: none;
             flex-direction: column;
             z-index: 100;
             padding: 24px;
             text-align: center;
-            backdrop-filter: blur(5px);
         }
 
         #detail-view h2 {
             font-size: 18px;
             margin-top: 25px;
             margin-bottom: 4px;
-            color: var(--r1-orange);
+            color: var(--eshop-orange);
             line-height: 1.2;
+            font-weight: 800;
         }
 
         #detail-author {
             font-size: 11px;
-            color: #666;
+            color: #b08d75;
             margin-bottom: 25px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            font-weight: 600;
         }
 
         .action-btn {
-            background: #111;
-            color: white;
-            border: 1px solid #333;
+            background: var(--eshop-white);
+            color: var(--eshop-orange);
+            border: 2px solid var(--eshop-border);
             padding: 12px;
-            border-radius: 12px;
+            border-radius: 20px;
             font-size: 14px;
-            font-weight: 700;
+            font-weight: 800;
             margin-bottom: 12px;
+            box-shadow: 0 4px 0 var(--eshop-border);
             transition: all 0.1s ease;
         }
 
         .action-btn.selected {
-            background: var(--r1-orange);
-            color: black !important;
-            border-color: var(--r1-orange);
-            transform: scale(1.05);
+            background: var(--eshop-white);
+            color: var(--eshop-orange) !important;
+            border-color: var(--eshop-orange);
+            box-shadow: 0 4px 0 var(--eshop-orange);
+            transform: translateY(-2px);
         }
 
         .footer-hint {
-            height: 24px;
-            font-size: 8px;
-            color: #444;
+            height: 28px;
+            font-size: 9px;
+            color: #ffffff;
             text-align: center;
             display: flex;
             justify-content: center;
             align-items: center;
-            background: var(--r1-dark-gray);
+            background: var(--eshop-orange);
             text-transform: uppercase;
+            font-weight: 700;
             letter-spacing: 0.5px;
-            border-top: 1px solid var(--r1-border);
         }
 
         .loading-state {
@@ -207,17 +220,18 @@
             align-items: center;
             height: 100%;
             font-size: 11px;
-            color: var(--r1-orange);
+            color: var(--eshop-orange);
             gap: 10px;
+            font-weight: 700;
         }
 
         .spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255, 78, 0, 0.2);
-            border-top-color: var(--r1-orange);
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 109, 0, 0.2);
+            border-top-color: var(--eshop-orange);
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+            animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
         }
 
         @keyframes spin {
@@ -227,6 +241,10 @@
 </head>
 <body>
 
+    <audio id="bg-music" loop>
+        <source src="https://wwtv127.github.io/r1-creations-store/music.mp3" type="audio/mpeg">
+    </audio>
+
     <div class="tabs">
         <div id="tab-shop" class="tab active" onclick="setTab('shop')">Shop</div>
         <div id="tab-inv" class="tab" onclick="setTab('inventory')">Inventory</div>
@@ -235,7 +253,7 @@
     <div id="list-container">
         <div class="loading-state">
             <div class="spinner"></div>
-            Loading...
+            Connecting to eShop...
         </div>
     </div>
 
@@ -258,6 +276,7 @@
         let selectedIndex = 0;
         let isDetailView = false;
         let detailSelection = 0;
+        let musicStarted = false;
 
         const container = document.getElementById('list-container');
         const detailView = document.getElementById('detail-view');
@@ -265,58 +284,35 @@
         const detailAuthor = document.getElementById('detail-author');
         const primaryBtn = document.getElementById('primary-action');
         const secondaryBtn = document.getElementById('secondary-action');
+        const bgMusic = document.getElementById('bg-music');
 
         window.onload = async () => {
-            // Try to load immediately, then try again after a short delay
-            // because creationStorage injection can be asynchronous on R1 hardware.
             await loadInventory();
-            setTimeout(async () => {
-                if (inventory.length === 0) await loadInventory();
-            }, 500);
             await fetchShopItems();
         };
 
+        function startMusic() {
+            if (!musicStarted) {
+                bgMusic.play().catch(e => console.log("Autoplay blocked"));
+                musicStarted = true;
+            }
+        }
+
         async function loadInventory() {
             try {
-                let data = null;
-                
-                // 1. Try Rabbit R1 creationStorage
                 if (window.creationStorage) {
-                    data = await window.creationStorage.plain.getItem('my_creations');
-                } 
-                
-                // 2. Fallback to localStorage if hardware storage is missing/empty
-                if (!data) {
-                    data = localStorage.getItem('my_creations_backup');
+                    const data = await window.creationStorage.plain.getItem('my_creations');
+                    if (data) inventory = JSON.parse(atob(data));
                 }
-
-                if (data) {
-                    const parsed = JSON.parse(atob(data));
-                    if (Array.isArray(parsed)) {
-                        inventory = parsed;
-                        // Keep fallback in sync
-                        localStorage.setItem('my_creations_backup', data);
-                    }
-                }
-            } catch (e) { 
-                console.error("Storage load error", e); 
-            }
+            } catch (e) { console.error("Storage error", e); }
         }
 
         async function saveInventory() {
             try {
-                const dataString = btoa(JSON.stringify(inventory));
-                
-                // 1. Save to R1 Hardware Storage
                 if (window.creationStorage) {
-                    await window.creationStorage.plain.setItem('my_creations', dataString);
+                    await window.creationStorage.plain.setItem('my_creations', btoa(JSON.stringify(inventory)));
                 }
-                
-                // 2. Immediate Backup to LocalStorage (more reliable across minor flickers)
-                localStorage.setItem('my_creations_backup', dataString);
-            } catch (e) { 
-                console.error("Storage save error", e); 
-            }
+            } catch (e) { console.error("Storage error", e); }
         }
 
         async function fetchShopItems() {
@@ -326,11 +322,12 @@
                 shopItems = JSON.parse(text);
                 renderList();
             } catch (error) {
-                container.innerHTML = '<div class="loading-state" style="color:red">Failed to connect</div>';
+                container.innerHTML = '<div class="loading-state" style="color:red">Connection Failed</div>';
             }
         }
 
         function setTab(tabName) {
+            startMusic();
             if (isDetailView) return;
             currentTab = tabName;
             selectedIndex = 0;
@@ -344,7 +341,7 @@
             const list = currentTab === 'shop' ? shopItems : inventory;
 
             if (list.length === 0) {
-                container.innerHTML = `<div class="loading-state">${currentTab === 'shop' ? 'No items in shop' : 'Inventory is empty'}</div>`;
+                container.innerHTML = `<div class="loading-state">${currentTab === 'shop' ? 'No items available' : 'Your bag is empty'}</div>`;
                 return;
             }
 
@@ -382,10 +379,11 @@
             });
 
             const activeEl = document.getElementById(`item-${selectedIndex}`);
-            if (activeEl) activeEl.scrollIntoView({ behavior: 'auto', block: 'center' });
+            if (activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         function updateSelection(direction) {
+            startMusic();
             const list = currentTab === 'shop' ? shopItems : inventory;
             if (list.length === 0 && !isDetailView) return;
             
@@ -404,6 +402,7 @@
         }
 
         function handleAction() {
+            startMusic();
             const list = currentTab === 'shop' ? shopItems : inventory;
             if (list.length === 0) return;
 
@@ -435,7 +434,7 @@
             } else {
                 primaryBtn.innerText = "Open App";
                 secondaryBtn.innerText = "Delete";
-                secondaryBtn.style.color = "var(--r1-orange)";
+                secondaryBtn.style.color = "#d32f2f";
             }
             
             detailView.style.display = 'flex';
