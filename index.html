@@ -32,6 +32,21 @@
             flex-direction: column;
         }
 
+        /* Initial Splash Overlay */
+        #splash-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--eshop-white);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
         .tabs {
             height: 44px;
             display: flex;
@@ -39,6 +54,7 @@
             flex-shrink: 0;
             padding: 4px;
             gap: 4px;
+            visibility: hidden; /* Hidden until loaded */
         }
 
         .tab {
@@ -67,6 +83,7 @@
             position: relative;
             padding: 8px 0;
             background: radial-gradient(circle, #ffffff 0%, #fffbf5 100%);
+            visibility: hidden; /* Hidden until loaded */
         }
 
         .creation-item {
@@ -211,6 +228,7 @@
             text-transform: uppercase;
             font-weight: 700;
             letter-spacing: 0.5px;
+            visibility: hidden; /* Hidden until loaded */
         }
 
         .loading-state {
@@ -241,16 +259,25 @@
 </head>
 <body>
 
-    <audio id="bg-music" loop>
+    <!-- Startup Loading Screen -->
+    <div id="splash-screen">
+        <div class="loading-state">
+            <div class="spinner"></div>
+            Loading Store
+        </div>
+    </div>
+
+    <audio id="bg-music" loop preload="auto">
         <source src="https://wwtv127.github.io/r1-creations-store/music.mp3" type="audio/mpeg">
     </audio>
 
-    <div class="tabs">
+    <div class="tabs" id="main-tabs">
         <div id="tab-shop" class="tab active" onclick="setTab('shop')">Shop</div>
         <div id="tab-inv" class="tab" onclick="setTab('inventory')">Inventory</div>
     </div>
 
     <div id="list-container">
+        <!-- Inner loading while fetching shop list -->
         <div class="loading-state">
             <div class="spinner"></div>
             Connecting to Store...
@@ -278,7 +305,11 @@
         let detailSelection = 0;
         let musicStarted = false;
 
-        const container = document.getElementById('list-container');
+        const splash = document.getElementById('splash-screen');
+        const mainTabs = document.getElementById('main-tabs');
+        const listContainer = document.getElementById('list-container');
+        const footerHint = document.getElementById('hint-text');
+
         const detailView = document.getElementById('detail-view');
         const detailTitle = document.getElementById('detail-title');
         const detailAuthor = document.getElementById('detail-author');
@@ -289,13 +320,24 @@
         window.onload = async () => {
             await loadInventory();
             await fetchShopItems();
+            forcePlayAudio();
         };
 
-        function startMusic() {
-            if (!musicStarted) {
-                bgMusic.play().catch(e => console.log("Autoplay blocked"));
-                musicStarted = true;
-            }
+        function forcePlayAudio() {
+            const attempt = () => {
+                bgMusic.play().then(() => {
+                    // Audio is playing, hide splash and show UI
+                    splash.style.display = 'none';
+                    mainTabs.style.visibility = 'visible';
+                    listContainer.style.visibility = 'visible';
+                    footerHint.style.visibility = 'visible';
+                    musicStarted = true;
+                }).catch(e => {
+                    // Retry until audio starts
+                    setTimeout(attempt, 500);
+                });
+            };
+            attempt();
         }
 
         async function loadInventory() {
@@ -320,15 +362,14 @@
                 const response = await fetch(DATA_URL);
                 const text = await response.text();
                 shopItems = JSON.parse(text);
-                renderList();
+                if (musicStarted) renderList();
             } catch (error) {
-                container.innerHTML = '<div class="loading-state" style="color:red">Connection Failed</div>';
+                listContainer.innerHTML = '<div class="loading-state" style="color:red">Connection Failed</div>';
             }
         }
 
         function setTab(tabName) {
-            startMusic();
-            if (isDetailView) return;
+            if (isDetailView || !musicStarted) return;
             currentTab = tabName;
             selectedIndex = 0;
             document.getElementById('tab-shop').classList.toggle('active', currentTab === 'shop');
@@ -337,11 +378,11 @@
         }
 
         function renderList() {
-            container.innerHTML = '';
+            listContainer.innerHTML = '';
             const list = currentTab === 'shop' ? shopItems : inventory;
 
             if (list.length === 0) {
-                container.innerHTML = `<div class="loading-state">${currentTab === 'shop' ? 'No items available' : 'Inventory empty'}</div>`;
+                listContainer.innerHTML = `<div class="loading-state">${currentTab === 'shop' ? 'No items available' : 'Inventory empty'}</div>`;
                 return;
             }
 
@@ -375,7 +416,7 @@
                 
                 div.appendChild(textWrapper);
                 div.appendChild(icon);
-                container.appendChild(div);
+                listContainer.appendChild(div);
             });
 
             const activeEl = document.getElementById(`item-${selectedIndex}`);
@@ -383,7 +424,7 @@
         }
 
         function updateSelection(direction) {
-            startMusic();
+            if (!musicStarted) return;
             const list = currentTab === 'shop' ? shopItems : inventory;
             if (list.length === 0 && !isDetailView) return;
             
@@ -402,7 +443,7 @@
         }
 
         function handleAction() {
-            startMusic();
+            if (!musicStarted) return;
             const list = currentTab === 'shop' ? shopItems : inventory;
             if (list.length === 0) return;
 
