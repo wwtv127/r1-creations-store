@@ -23,7 +23,7 @@
 
         body {
             width: 240px;
-            height: 282px;
+            height: 292px;
             background-color: var(--eshop-white);
             color: var(--eshop-text);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -246,7 +246,7 @@
     </audio>
 
     <div class="tabs">
-        <div id="tab-shop" class="tab active" onclick="setTab('shop')">Store</div>
+        <div id="tab-shop" class="tab active" onclick="setTab('shop')">Shop</div>
         <div id="tab-inv" class="tab" onclick="setTab('inventory')">Inventory</div>
     </div>
 
@@ -341,7 +341,7 @@
             const list = currentTab === 'shop' ? shopItems : inventory;
 
             if (list.length === 0) {
-                container.innerHTML = `<div class="loading-state">${currentTab === 'shop' ? 'No items available' : 'Your bag is empty'}</div>`;
+                container.innerHTML = `<div class="loading-state">${currentTab === 'shop' ? 'No items available' : 'Inventory empty'}</div>`;
                 return;
             }
 
