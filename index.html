@@ -327,11 +327,12 @@
             const attempt = () => {
                 bgMusic.play().then(() => {
                     // Audio is playing, hide splash and show UI
+                    musicStarted = true;
                     splash.style.display = 'none';
                     mainTabs.style.visibility = 'visible';
                     listContainer.style.visibility = 'visible';
                     footerHint.style.visibility = 'visible';
-                    musicStarted = true;
+                    renderList(); // Force render once UI becomes visible
                 }).catch(e => {
                     // Retry until audio starts
                     setTimeout(attempt, 500);
@@ -378,6 +379,8 @@
         }
 
         function renderList() {
+            if (!musicStarted) return; // Wait for audio splash to clear
+            
             listContainer.innerHTML = '';
             const list = currentTab === 'shop' ? shopItems : inventory;
 
