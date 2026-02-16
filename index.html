@@ -138,68 +138,65 @@
         import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // This string will be replaced by your GitHub Action with the content of your secret.
-        const configRaw = 'REPLACE_WITH_FIREBASE_CONFIG';
+        // DO NOT EDIT THE STRING BELOW. GitHub Actions will look for this exact text.
+        const fb_secret = 'REPLACE_WITH_FIREBASE_CONFIG';
         
-        // Safety check to ensure the config exists before attempting to initialize
-        if (configRaw === 'REPLACE_WITH_FIREBASE_CONFIG') {
-            console.error("Firebase Config not found. Ensure GitHub Actions is correctly injecting the secret.");
-            document.body.innerHTML = `
-                <div class="flex items-center justify-center min-h-screen p-6 text-center">
-                    <div class="max-w-md">
-                        <h1 class="text-2xl font-bold text-orange-600 mb-4">Configuration Missing</h1>
-                        <p class="text-gray-400">The app could not find its configuration. If you just deployed, wait a few minutes for GitHub Actions to finish.</p>
+        // This is the bootstrap function that starts the app
+        async function startApp() {
+            try {
+                // If the replacement fails, fb_secret remains as the placeholder string.
+                if (fb_secret.startsWith('REPLACE')) {
+                    throw new Error("Missing Config: Check GitHub Actions Logs.");
+                }
+
+                const firebaseConfig = JSON.parse(fb_secret);
+                const app = initializeApp(firebaseConfig);
+                const db = getFirestore(app);
+                const auth = getAuth(app);
+                
+                await signInAnonymously(auth);
+                initLogic(db, auth);
+
+            } catch (err) {
+                console.error("Initialization failed:", err);
+                document.body.innerHTML = `
+                    <div class="flex flex-col items-center justify-center min-h-screen p-6 text-center bg-black">
+                        <div class="p-8 rounded-3xl border border-zinc-800 bg-zinc-900 max-w-md">
+                            <h1 class="text-2xl font-bold text-orange-600 mb-4">Connection Error</h1>
+                            <p class="text-gray-400 mb-6">The app could not connect to its database. This is usually due to a deployment configuration issue.</p>
+                            <code class="block bg-black p-4 rounded-lg text-xs text-red-400 text-left overflow-x-auto">${err.message}</code>
+                        </div>
                     </div>
-                </div>
-            `;
-        } else {
-            initApp(JSON.parse(configRaw));
+                `;
+            }
         }
 
-        function initApp(firebaseConfig) {
-            const app = initializeApp(firebaseConfig);
-            const db = getFirestore(app);
-            const auth = getAuth(app);
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'creations-store-v1';
-
+        function initLogic(db, auth) {
+            const appId = 'creations-store-v1';
             let creations = [];
             let selectedCategory = 'All';
 
-            // Auth initialization
-            signInAnonymously(auth).catch(err => console.error("Auth failed", err));
-
-            // Firestore Path Rule 1 Implementation
             const creationsCol = collection(db, 'artifacts', appId, 'public', 'data', 'creations');
 
-            // Real-time listener
             onSnapshot(creationsCol, (snapshot) => {
                 creations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderCreations();
             }, (err) => console.error("Firestore error:", err));
 
-            // View Switcher
             window.showView = (viewName, itemId = null) => {
                 document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
                 document.getElementById(`view-${viewName}`).classList.remove('hidden');
                 window.scrollTo(0, 0);
-
-                if (viewName === 'details' && itemId) {
-                    renderDetails(itemId);
-                }
+                if (viewName === 'details' && itemId) renderDetails(itemId);
             };
 
-            // Render Home Grid
             function renderCreations() {
                 const grid = document.getElementById('creations-grid');
-                const filtered = selectedCategory === 'All' 
-                    ? creations 
-                    : creations.filter(c => c.category === selectedCategory);
-
+                const filtered = selectedCategory === 'All' ? creations : creations.filter(c => c.category === selectedCategory);
                 if (filtered.length === 0) {
-                    grid.innerHTML = `<div class="col-span-full py-20 text-center text-gray-500">No creations found in this category.</div>`;
+                    grid.innerHTML = `<div class="col-span-full py-20 text-center text-gray-500 uppercase tracking-widest text-xs">No entries found</div>`;
                     return;
                 }
-
                 grid.innerHTML = filtered.map(item => `
                     <div onclick="showView('details', '${item.id}')" class="group cursor-pointer bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                         <div class="h-48 overflow-hidden bg-zinc-800 relative">
@@ -220,21 +217,17 @@
                 `).join('');
             }
 
-            // Category Filter
             window.filterCategory = (cat) => {
                 selectedCategory = cat;
                 document.querySelectorAll('.category-pill').forEach(btn => {
-                    btn.classList.remove('active');
-                    if (btn.innerText === cat) btn.classList.add('active');
+                    btn.classList.toggle('active', btn.innerText === cat);
                 });
                 renderCreations();
             };
 
-            // Details Page
             function renderDetails(id) {
                 const item = creations.find(c => c.id === id);
                 if (!item) return;
-
                 const container = document.getElementById('details-content');
                 container.innerHTML = `
                     <div class="bg-zinc-900 rounded-3xl overflow-hidden shadow-xl border border-zinc-800">
@@ -244,89 +237,47 @@
                             <div class="absolute bottom-6 left-6 right-6 flex items-end justify-between text-white">
                                 <div class="flex items-end gap-6">
                                     <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl shadow-2xl p-1 bg-zinc-900 border border-zinc-800 shrink-0">
-                                        ${item.iconUrl 
-                                            ? `<img src="${item.iconUrl}" class="w-full h-full rounded-xl object-cover">`
-                                            : `<div class="w-full h-full rounded-xl flex items-center justify-center text-4xl font-black" style="background:${item.themeColor}">${item.title[0]}</div>`
-                                        }
+                                        ${item.iconUrl ? `<img src="${item.iconUrl}" class="w-full h-full rounded-xl object-cover">` : `<div class="w-full h-full rounded-xl flex items-center justify-center text-4xl font-black" style="background:${item.themeColor}">${item.title[0]}</div>`}
                                     </div>
                                     <div class="pb-2">
                                         <h2 class="text-3xl font-black leading-tight">${item.title}</h2>
                                         <p class="text-gray-300 font-medium">${item.category} • By ${item.author || 'Anonymous'}</p>
                                     </div>
                                 </div>
-                                
                                 <button id="install-btn" class="mb-2 bg-orange-600 hover:bg-orange-700 text-white flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition shadow-lg active:scale-95">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                                    </svg>
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                                     <span>Install</span>
                                 </button>
                             </div>
                         </div>
-                        
                         <div class="p-6 sm:p-10">
                             <div class="space-y-6">
-                                <div>
-                                    <h4 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Description</h4>
-                                    <p class="text-gray-300 text-lg leading-relaxed whitespace-pre-line">${item.description}</p>
-                                </div>
-                                <div>
-                                    <h4 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Website</h4>
-                                    <a href="${item.url}" target="_blank" class="text-orange-500 font-semibold hover:underline flex items-center">
-                                        ${item.url}
-                                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                                    </a>
-                                </div>
+                                <div><h4 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Description</h4><p class="text-gray-300 text-lg leading-relaxed whitespace-pre-line">${item.description}</p></div>
+                                <div><h4 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Website</h4><a href="${item.url}" target="_blank" class="text-orange-500 font-semibold hover:underline flex items-center">${item.url} <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></a></div>
                             </div>
                         </div>
                     </div>
                 `;
-
                 document.getElementById('install-btn').onclick = () => showQR(item);
             }
 
-            // QR Functionality
             window.showQR = (item) => {
                 const modal = document.getElementById('qr-modal');
                 const container = document.getElementById('qrcode-container');
                 container.innerHTML = "";
-                
-                const exportData = {
-                    title: item.title,
-                    url: item.url,
-                    description: item.description,
-                    iconUrl: item.iconUrl || "",
-                    themeColor: item.themeColor || "#000000",
-                    author: item.author || "",
-                    screenshotUrl: item.screenshotUrl || "",
-                    category: item.category
-                };
-
-                new QRCode(container, {
-                    text: JSON.stringify(exportData),
-                    width: 256,
-                    height: 256,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.M
-                });
-
+                const exportData = { title: item.title, url: item.url, description: item.description, iconUrl: item.iconUrl || "", themeColor: item.themeColor || "#000000", author: item.author || "", screenshotUrl: item.screenshotUrl || "", category: item.category };
+                new QRCode(container, { text: JSON.stringify(exportData), width: 256, height: 256, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
                 modal.classList.remove('hidden');
             };
 
-            window.closeQR = () => {
-                document.getElementById('qr-modal').classList.add('hidden');
-            };
+            window.closeQR = () => document.getElementById('qr-modal').classList.add('hidden');
 
-            // Form Handling
             document.getElementById('add-creation-form').onsubmit = async (e) => {
                 e.preventDefault();
-                const submitBtn = e.target.querySelector('button[type="submit"]');
-                submitBtn.disabled = true;
-                submitBtn.innerText = "Publishing...";
-
+                const btn = e.target.querySelector('button[type="submit"]');
+                btn.disabled = true; btn.innerText = "Publishing...";
                 try {
-                    const data = {
+                    await addDoc(creationsCol, {
                         title: document.getElementById('form-title').value,
                         url: document.getElementById('form-url').value,
                         category: document.getElementById('form-category').value,
@@ -336,20 +287,14 @@
                         screenshotUrl: document.getElementById('form-screenshot').value,
                         author: document.getElementById('form-author').value,
                         createdAt: serverTimestamp()
-                    };
-
-                    await addDoc(creationsCol, data);
-                    e.target.reset();
-                    showView('home');
-                } catch (err) {
-                    console.error("Error adding creation:", err);
-                } finally {
-                    submitBtn.disabled = false;
-                    submitBtn.innerText = "Publish Creation";
-                }
+                    });
+                    e.target.reset(); showView('home');
+                } catch (err) { console.error(err); } 
+                finally { btn.disabled = false; btn.innerText = "Publish Creation"; }
             };
         }
 
+        startApp();
     </script>
 </body>
 </html>
