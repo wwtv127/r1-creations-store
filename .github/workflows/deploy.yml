@@ -23,11 +23,11 @@ jobs:
         run: |
           node -e "
           const fs = require('fs');
-          const file = 'index.html';
-          let content = fs.readFileSync(file, 'utf8');
-          // This replaces the placeholder string with the actual secret string
-          content = content.replace('REPLACE_WITH_FIREBASE_CONFIG', process.env.FB_CONFIG);
-          fs.writeFileSync(file, content);
+          const path = 'index.html';
+          let html = fs.readFileSync(path, 'utf8');
+          // We wrap the secret in double quotes to ensure it's treated as a string in the JS
+          const updatedHtml = html.replace('REPLACE_WITH_FIREBASE_CONFIG', process.env.FB_CONFIG);
+          fs.writeFileSync(path, updatedHtml);
           "
       - name: Setup Pages
         uses: actions/configure-pages@v4
