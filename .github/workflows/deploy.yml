@@ -18,8 +18,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Inject Firebase Config
+        env:
+          FB_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
         run: |
-          sed -i "s|'REPLACE_WITH_FIREBASE_CONFIG'|'${{ secrets.FIREBASE_CONFIG }}'|g" index.html
+          # Use node to safely perform the replacement even with newlines/special chars
+          node -e "const fs = require('fs'); const content = fs.readFileSync('index.html', 'utf8'); const result = content.replace('REPLACE_WITH_FIREBASE_CONFIG', process.env.FB_CONFIG); fs.writeFileSync('index.html', result);"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
