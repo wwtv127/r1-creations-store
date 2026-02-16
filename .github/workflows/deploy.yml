@@ -21,9 +21,14 @@ jobs:
         env:
           FB_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
         run: |
-          # Use node to safely perform the replacement even with newlines/special chars
-          node -e "const fs = require('fs'); const content = fs.readFileSync('index.html', 'utf8'); const result = content.replace('REPLACE_WITH_FIREBASE_CONFIG', process.env.FB_CONFIG); fs.writeFileSync('index.html', result);"
-
+          node -e "
+          const fs = require('fs');
+          const file = 'index.html';
+          let content = fs.readFileSync(file, 'utf8');
+          // This replaces the placeholder string with the actual secret string
+          content = content.replace('REPLACE_WITH_FIREBASE_CONFIG', process.env.FB_CONFIG);
+          fs.writeFileSync(file, content);
+          "
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
