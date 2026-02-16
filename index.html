@@ -138,26 +138,20 @@
         import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // Template literal allows multi-line config and is more robust for injection
+        // Single line placeholder to prevent accidental multiline breaks during injection
         const raw_secret = `REPLACE_WITH_FIREBASE_CONFIG`;
         
         async function startApp() {
             try {
-                // 1. Clean up the secret string.
-                // We only trim surrounding whitespace and backticks/quotes that might be added by shell scripts.
-                // We use a specific slice/trim instead of global replacement to avoid mangling JSON content.
-                let cleanSecret = raw_secret.trim();
+                // Find the first '{' and the last '}' to strip any accidental noise
+                const startIdx = raw_secret.indexOf('{');
+                const endIdx = raw_secret.lastIndexOf('}');
                 
-                // Remove leading/trailing backticks or quotes if they exist around the whole block
-                if ((cleanSecret.startsWith('`') && cleanSecret.endsWith('`')) || 
-                    (cleanSecret.startsWith('"') && cleanSecret.endsWith('"')) ||
-                    (cleanSecret.startsWith("'") && cleanSecret.endsWith("'"))) {
-                    cleanSecret = cleanSecret.slice(1, -1).trim();
+                if (startIdx === -1 || endIdx === -1) {
+                    throw new Error("Could not find valid JSON object boundaries in secret.");
                 }
 
-                if (!cleanSecret || cleanSecret.includes('REPLACE_WITH_FIREBASE_CONFIG')) {
-                    throw new Error("Firebase Config placeholder detected. Injection failed.");
-                }
+                const cleanSecret = raw_secret.substring(startIdx, endIdx + 1);
 
                 // 2. Parse cleansed JSON
                 const firebaseConfig = JSON.parse(cleanSecret);
@@ -175,8 +169,9 @@
                     <div class="flex flex-col items-center justify-center min-h-screen p-6 text-center bg-black">
                         <div class="p-8 rounded-3xl border border-zinc-800 bg-zinc-900 max-w-md">
                             <h1 class="text-2xl font-bold text-orange-600 mb-4">Connection Error</h1>
-                            <p class="text-gray-400 mb-6">Database link failed. Verify the GitHub Secret is formatted as valid JSON.</p>
+                            <p class="text-gray-400 mb-6 text-sm">Database link failed. Verify the GitHub Secret is valid JSON.</p>
                             <code class="block bg-zinc-950 p-4 rounded-lg text-xs text-red-400 text-left overflow-x-auto whitespace-pre-wrap">${err.message}</code>
+                            <div class="mt-4 text-[10px] text-zinc-600 break-all">${raw_secret}</div>
                         </div>
                     </div>
                 `;
