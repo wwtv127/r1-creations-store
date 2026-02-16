@@ -138,23 +138,30 @@
         import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // Single line placeholder to prevent accidental multiline breaks during injection
         const raw_secret = `REPLACE_WITH_FIREBASE_CONFIG`;
         
         async function startApp() {
             try {
-                // Find the first '{' and the last '}' to strip any accidental noise
+                // Find boundaries
                 const startIdx = raw_secret.indexOf('{');
                 const endIdx = raw_secret.lastIndexOf('}');
                 
                 if (startIdx === -1 || endIdx === -1) {
-                    throw new Error("Could not find valid JSON object boundaries in secret.");
+                    throw new Error("Invalid Config Format");
                 }
 
-                const cleanSecret = raw_secret.substring(startIdx, endIdx + 1);
+                let jsonStr = raw_secret.substring(startIdx, endIdx + 1);
 
-                // 2. Parse cleansed JSON
-                const firebaseConfig = JSON.parse(cleanSecret);
+                // Auto-correct common "Lazy JSON" issues:
+                // 1. Ensure keys are double-quoted
+                // 2. Remove trailing commas before closing braces
+                // 3. Convert single quotes to double quotes for values
+                const formattedStr = jsonStr
+                    .replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":') // Quote keys
+                    .replace(/:\s*'([^']*)'/g, ': "$1"') // Convert single quoted values to double
+                    .replace(/,\s*([\]}])/g, '$1'); // Remove trailing commas
+
+                const firebaseConfig = JSON.parse(formattedStr);
                 
                 const app = initializeApp(firebaseConfig);
                 const db = getFirestore(app);
@@ -169,9 +176,8 @@
                     <div class="flex flex-col items-center justify-center min-h-screen p-6 text-center bg-black">
                         <div class="p-8 rounded-3xl border border-zinc-800 bg-zinc-900 max-w-md">
                             <h1 class="text-2xl font-bold text-orange-600 mb-4">Connection Error</h1>
-                            <p class="text-gray-400 mb-6 text-sm">Database link failed. Verify the GitHub Secret is valid JSON.</p>
+                            <p class="text-gray-400 mb-6 text-sm">Database link failed. Ensure your JSON keys are quoted.</p>
                             <code class="block bg-zinc-950 p-4 rounded-lg text-xs text-red-400 text-left overflow-x-auto whitespace-pre-wrap">${err.message}</code>
-                            <div class="mt-4 text-[10px] text-zinc-600 break-all">${raw_secret}</div>
                         </div>
                     </div>
                 `;
