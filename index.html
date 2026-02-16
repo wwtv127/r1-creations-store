@@ -138,18 +138,16 @@
         import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // DO NOT EDIT THE STRING BELOW. GitHub Actions will look for this exact text.
-        const fb_secret = 'REPLACE_WITH_FIREBASE_CONFIG';
+        // We use backticks (``) here to support multi-line injection without "Unexpected EOF"
+        const fb_secret = `REPLACE_WITH_FIREBASE_CONFIG`;
         
-        // This is the bootstrap function that starts the app
         async function startApp() {
             try {
-                // If the replacement fails, fb_secret remains as the placeholder string.
-                if (fb_secret.startsWith('REPLACE')) {
-                    throw new Error("Missing Config: Check GitHub Actions Logs.");
+                if (fb_secret.includes('REPLACE_WITH_FIREBASE_CONFIG')) {
+                    throw new Error("Missing Config: Check GitHub Actions Injection.");
                 }
 
-                const firebaseConfig = JSON.parse(fb_secret);
+                const firebaseConfig = JSON.parse(fb_secret.trim());
                 const app = initializeApp(firebaseConfig);
                 const db = getFirestore(app);
                 const auth = getAuth(app);
@@ -163,7 +161,7 @@
                     <div class="flex flex-col items-center justify-center min-h-screen p-6 text-center bg-black">
                         <div class="p-8 rounded-3xl border border-zinc-800 bg-zinc-900 max-w-md">
                             <h1 class="text-2xl font-bold text-orange-600 mb-4">Connection Error</h1>
-                            <p class="text-gray-400 mb-6">The app could not connect to its database. This is usually due to a deployment configuration issue.</p>
+                            <p class="text-gray-400 mb-6">Database link failed. Verify the GitHub Secret is formatted as valid JSON.</p>
                             <code class="block bg-black p-4 rounded-lg text-xs text-red-400 text-left overflow-x-auto">${err.message}</code>
                         </div>
                     </div>
