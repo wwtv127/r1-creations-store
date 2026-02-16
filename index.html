@@ -44,7 +44,7 @@
             <div id="creations-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Items will be injected here -->
                 <div class="animate-pulse flex space-x-4">
-                    <div class="rounded-xl bg-gray-800 h-48 w-full"></div>
+                    <div class="rounded-xl bg-zinc-800 h-48 w-full"></div>
                 </div>
             </div>
         </div>
@@ -138,215 +138,217 @@
         import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // This expects a global variable named FIREBASE_CONFIG to be present.
-        // If it's not present (like in local development), it falls back to the previous values.
-        // On GitHub, your CI/CD should replace 'REPLACE_WITH_FIREBASE_CONFIG' with your secret.
+        // This string will be replaced by your GitHub Action with the content of your secret.
         const configRaw = 'REPLACE_WITH_FIREBASE_CONFIG';
         
-        const firebaseConfig = configRaw !== 'REPLACE_WITH_FIREBASE_CONFIG' 
-            ? JSON.parse(configRaw) 
-            : {
-                apiKey: "AIzaSyANzhTIQbJgfapnVwQsLnW278s5SOVRizY",
-                authDomain: "xstream-a29a5.firebaseapp.com",
-                databaseURL: "https://xstream-a29a5-default-rtdb.firebaseio.com",
-                projectId: "xstream-a29a5",
-                storageBucket: "xstream-a29a5.firebasestorage.app",
-                messagingSenderId: "1015069413945",
-                appId: "1:1015069413945:web:efe987c7530dfc688273e8",
-                measurementId: "G-LD32GG0E0H"
-            };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'creations-store-v1';
-
-        let creations = [];
-        let selectedCategory = 'All';
-
-        // Auth initialization
-        signInAnonymously(auth).catch(err => console.error("Auth failed", err));
-
-        // Firestore Path Rule 1 Implementation
-        const creationsCol = collection(db, 'artifacts', appId, 'public', 'data', 'creations');
-
-        // Real-time listener
-        onSnapshot(creationsCol, (snapshot) => {
-            creations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderCreations();
-        }, (err) => console.error("Firestore error:", err));
-
-        // View Switcher
-        window.showView = (viewName, itemId = null) => {
-            document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
-            document.getElementById(`view-${viewName}`).classList.remove('hidden');
-            window.scrollTo(0, 0);
-
-            if (viewName === 'details' && itemId) {
-                renderDetails(itemId);
-            }
-        };
-
-        // Render Home Grid
-        function renderCreations() {
-            const grid = document.getElementById('creations-grid');
-            const filtered = selectedCategory === 'All' 
-                ? creations 
-                : creations.filter(c => c.category === selectedCategory);
-
-            if (filtered.length === 0) {
-                grid.innerHTML = `<div class="col-span-full py-20 text-center text-gray-500">No creations found in this category.</div>`;
-                return;
-            }
-
-            grid.innerHTML = filtered.map(item => `
-                <div onclick="showView('details', '${item.id}')" class="group cursor-pointer bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                    <div class="h-48 overflow-hidden bg-zinc-800 relative">
-                        ${item.screenshotUrl 
-                            ? `<img src="${item.screenshotUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://via.placeholder.com/400x200?text=No+Preview'">`
-                            : `<div class="w-full h-full flex items-center justify-center text-white font-bold text-4xl" style="background: ${item.themeColor || '#fe5000'}">${item.title.charAt(0)}</div>`
-                        }
-                        <div class="absolute top-3 left-3 px-3 py-1 bg-black/80 backdrop-blur rounded-full text-xs font-bold text-white border border-zinc-700 shadow-sm">${item.category}</div>
-                    </div>
-                    <div class="p-5">
-                        <div class="flex items-center gap-3 mb-2">
-                            ${item.iconUrl ? `<img src="${item.iconUrl}" class="w-8 h-8 rounded-lg shadow-sm">` : `<div class="w-8 h-8 rounded-lg" style="background:${item.themeColor}"></div>`}
-                            <h3 class="font-bold text-lg leading-tight text-white">${item.title}</h3>
-                        </div>
-                        <p class="text-gray-400 text-sm line-clamp-2">${item.description}</p>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Category Filter
-        window.filterCategory = (cat) => {
-            selectedCategory = cat;
-            document.querySelectorAll('.category-pill').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.innerText === cat) btn.classList.add('active');
-            });
-            renderCreations();
-        };
-
-        // Details Page
-        function renderDetails(id) {
-            const item = creations.find(c => c.id === id);
-            if (!item) return;
-
-            const container = document.getElementById('details-content');
-            container.innerHTML = `
-                <div class="bg-zinc-900 rounded-3xl overflow-hidden shadow-xl border border-zinc-800">
-                    <div class="relative h-64 sm:h-96 bg-zinc-800">
-                        <img src="${item.screenshotUrl || 'https://via.placeholder.com/1200x600?text=No+Image'}" class="w-full h-full object-cover">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
-                        <div class="absolute bottom-6 left-6 right-6 flex items-end justify-between text-white">
-                            <div class="flex items-end gap-6">
-                                <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl shadow-2xl p-1 bg-zinc-900 border border-zinc-800 shrink-0">
-                                    ${item.iconUrl 
-                                        ? `<img src="${item.iconUrl}" class="w-full h-full rounded-xl object-cover">`
-                                        : `<div class="w-full h-full rounded-xl flex items-center justify-center text-4xl font-black" style="background:${item.themeColor}">${item.title[0]}</div>`
-                                    }
-                                </div>
-                                <div class="pb-2">
-                                    <h2 class="text-3xl font-black leading-tight">${item.title}</h2>
-                                    <p class="text-gray-300 font-medium">${item.category} • By ${item.author || 'Anonymous'}</p>
-                                </div>
-                            </div>
-                            
-                            <button id="install-btn" class="mb-2 bg-orange-600 hover:bg-orange-700 text-white flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition shadow-lg active:scale-95">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                                </svg>
-                                <span>Install</span>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="p-6 sm:p-10">
-                        <div class="space-y-6">
-                            <div>
-                                <h4 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Description</h4>
-                                <p class="text-gray-300 text-lg leading-relaxed whitespace-pre-line">${item.description}</p>
-                            </div>
-                            <div>
-                                <h4 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Website</h4>
-                                <a href="${item.url}" target="_blank" class="text-orange-500 font-semibold hover:underline flex items-center">
-                                    ${item.url}
-                                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                                </a>
-                            </div>
-                        </div>
+        // Safety check to ensure the config exists before attempting to initialize
+        if (configRaw === 'REPLACE_WITH_FIREBASE_CONFIG') {
+            console.error("Firebase Config not found. Ensure GitHub Actions is correctly injecting the secret.");
+            document.body.innerHTML = `
+                <div class="flex items-center justify-center min-h-screen p-6 text-center">
+                    <div class="max-w-md">
+                        <h1 class="text-2xl font-bold text-orange-600 mb-4">Configuration Missing</h1>
+                        <p class="text-gray-400">The app could not find its configuration. If you just deployed, wait a few minutes for GitHub Actions to finish.</p>
                     </div>
                 </div>
             `;
-
-            document.getElementById('install-btn').onclick = () => showQR(item);
+        } else {
+            initApp(JSON.parse(configRaw));
         }
 
-        // QR Functionality
-        window.showQR = (item) => {
-            const modal = document.getElementById('qr-modal');
-            const container = document.getElementById('qrcode-container');
-            container.innerHTML = "";
-            
-            const exportData = {
-                title: item.title,
-                url: item.url,
-                description: item.description,
-                iconUrl: item.iconUrl || "",
-                themeColor: item.themeColor || "#000000",
-                author: item.author || "",
-                screenshotUrl: item.screenshotUrl || "",
-                category: item.category
+        function initApp(firebaseConfig) {
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+            const auth = getAuth(app);
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'creations-store-v1';
+
+            let creations = [];
+            let selectedCategory = 'All';
+
+            // Auth initialization
+            signInAnonymously(auth).catch(err => console.error("Auth failed", err));
+
+            // Firestore Path Rule 1 Implementation
+            const creationsCol = collection(db, 'artifacts', appId, 'public', 'data', 'creations');
+
+            // Real-time listener
+            onSnapshot(creationsCol, (snapshot) => {
+                creations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderCreations();
+            }, (err) => console.error("Firestore error:", err));
+
+            // View Switcher
+            window.showView = (viewName, itemId = null) => {
+                document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+                document.getElementById(`view-${viewName}`).classList.remove('hidden');
+                window.scrollTo(0, 0);
+
+                if (viewName === 'details' && itemId) {
+                    renderDetails(itemId);
+                }
             };
 
-            new QRCode(container, {
-                text: JSON.stringify(exportData),
-                width: 256,
-                height: 256,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.M
-            });
+            // Render Home Grid
+            function renderCreations() {
+                const grid = document.getElementById('creations-grid');
+                const filtered = selectedCategory === 'All' 
+                    ? creations 
+                    : creations.filter(c => c.category === selectedCategory);
 
-            modal.classList.remove('hidden');
-        };
+                if (filtered.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full py-20 text-center text-gray-500">No creations found in this category.</div>`;
+                    return;
+                }
 
-        window.closeQR = () => {
-            document.getElementById('qr-modal').classList.add('hidden');
-        };
+                grid.innerHTML = filtered.map(item => `
+                    <div onclick="showView('details', '${item.id}')" class="group cursor-pointer bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                        <div class="h-48 overflow-hidden bg-zinc-800 relative">
+                            ${item.screenshotUrl 
+                                ? `<img src="${item.screenshotUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://via.placeholder.com/400x200?text=No+Preview'">`
+                                : `<div class="w-full h-full flex items-center justify-center text-white font-bold text-4xl" style="background: ${item.themeColor || '#fe5000'}">${item.title.charAt(0)}</div>`
+                            }
+                            <div class="absolute top-3 left-3 px-3 py-1 bg-black/80 backdrop-blur rounded-full text-xs font-bold text-white border border-zinc-700 shadow-sm">${item.category}</div>
+                        </div>
+                        <div class="p-5">
+                            <div class="flex items-center gap-3 mb-2">
+                                ${item.iconUrl ? `<img src="${item.iconUrl}" class="w-8 h-8 rounded-lg shadow-sm">` : `<div class="w-8 h-8 rounded-lg" style="background:${item.themeColor}"></div>`}
+                                <h3 class="font-bold text-lg leading-tight text-white">${item.title}</h3>
+                            </div>
+                            <p class="text-gray-400 text-sm line-clamp-2">${item.description}</p>
+                        </div>
+                    </div>
+                `).join('');
+            }
 
-        // Form Handling
-        document.getElementById('add-creation-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const submitBtn = e.target.querySelector('button[type="submit"]');
-            submitBtn.disabled = true;
-            submitBtn.innerText = "Publishing...";
+            // Category Filter
+            window.filterCategory = (cat) => {
+                selectedCategory = cat;
+                document.querySelectorAll('.category-pill').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.innerText === cat) btn.classList.add('active');
+                });
+                renderCreations();
+            };
 
-            try {
-                const data = {
-                    title: document.getElementById('form-title').value,
-                    url: document.getElementById('form-url').value,
-                    category: document.getElementById('form-category').value,
-                    description: document.getElementById('form-short-desc').value,
-                    themeColor: document.getElementById('form-theme').value,
-                    iconUrl: document.getElementById('form-icon').value,
-                    screenshotUrl: document.getElementById('form-screenshot').value,
-                    author: document.getElementById('form-author').value,
-                    createdAt: serverTimestamp()
+            // Details Page
+            function renderDetails(id) {
+                const item = creations.find(c => c.id === id);
+                if (!item) return;
+
+                const container = document.getElementById('details-content');
+                container.innerHTML = `
+                    <div class="bg-zinc-900 rounded-3xl overflow-hidden shadow-xl border border-zinc-800">
+                        <div class="relative h-64 sm:h-96 bg-zinc-800">
+                            <img src="${item.screenshotUrl || 'https://via.placeholder.com/1200x600?text=No+Image'}" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
+                            <div class="absolute bottom-6 left-6 right-6 flex items-end justify-between text-white">
+                                <div class="flex items-end gap-6">
+                                    <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl shadow-2xl p-1 bg-zinc-900 border border-zinc-800 shrink-0">
+                                        ${item.iconUrl 
+                                            ? `<img src="${item.iconUrl}" class="w-full h-full rounded-xl object-cover">`
+                                            : `<div class="w-full h-full rounded-xl flex items-center justify-center text-4xl font-black" style="background:${item.themeColor}">${item.title[0]}</div>`
+                                        }
+                                    </div>
+                                    <div class="pb-2">
+                                        <h2 class="text-3xl font-black leading-tight">${item.title}</h2>
+                                        <p class="text-gray-300 font-medium">${item.category} • By ${item.author || 'Anonymous'}</p>
+                                    </div>
+                                </div>
+                                
+                                <button id="install-btn" class="mb-2 bg-orange-600 hover:bg-orange-700 text-white flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition shadow-lg active:scale-95">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                    </svg>
+                                    <span>Install</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="p-6 sm:p-10">
+                            <div class="space-y-6">
+                                <div>
+                                    <h4 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Description</h4>
+                                    <p class="text-gray-300 text-lg leading-relaxed whitespace-pre-line">${item.description}</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Website</h4>
+                                    <a href="${item.url}" target="_blank" class="text-orange-500 font-semibold hover:underline flex items-center">
+                                        ${item.url}
+                                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('install-btn').onclick = () => showQR(item);
+            }
+
+            // QR Functionality
+            window.showQR = (item) => {
+                const modal = document.getElementById('qr-modal');
+                const container = document.getElementById('qrcode-container');
+                container.innerHTML = "";
+                
+                const exportData = {
+                    title: item.title,
+                    url: item.url,
+                    description: item.description,
+                    iconUrl: item.iconUrl || "",
+                    themeColor: item.themeColor || "#000000",
+                    author: item.author || "",
+                    screenshotUrl: item.screenshotUrl || "",
+                    category: item.category
                 };
 
-                await addDoc(creationsCol, data);
-                e.target.reset();
-                showView('home');
-            } catch (err) {
-                console.error("Error adding creation:", err);
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Publish Creation";
-            }
-        };
+                new QRCode(container, {
+                    text: JSON.stringify(exportData),
+                    width: 256,
+                    height: 256,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+
+                modal.classList.remove('hidden');
+            };
+
+            window.closeQR = () => {
+                document.getElementById('qr-modal').classList.add('hidden');
+            };
+
+            // Form Handling
+            document.getElementById('add-creation-form').onsubmit = async (e) => {
+                e.preventDefault();
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.innerText = "Publishing...";
+
+                try {
+                    const data = {
+                        title: document.getElementById('form-title').value,
+                        url: document.getElementById('form-url').value,
+                        category: document.getElementById('form-category').value,
+                        description: document.getElementById('form-short-desc').value,
+                        themeColor: document.getElementById('form-theme').value,
+                        iconUrl: document.getElementById('form-icon').value,
+                        screenshotUrl: document.getElementById('form-screenshot').value,
+                        author: document.getElementById('form-author').value,
+                        createdAt: serverTimestamp()
+                    };
+
+                    await addDoc(creationsCol, data);
+                    e.target.reset();
+                    showView('home');
+                } catch (err) {
+                    console.error("Error adding creation:", err);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "Publish Creation";
+                }
+            };
+        }
 
     </script>
 </body>
