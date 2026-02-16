@@ -2,534 +2,352 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>R1 Creation Selector</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creations Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root {
-            --eshop-orange: #ff6d00;
-            --eshop-light-orange: #fff3e0;
-            --eshop-white: #ffffff;
-            --eshop-gray: #f2f2f2;
-            --eshop-text: #444444;
-            --eshop-border: #e0e0e0;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            width: 240px;
-            height: 292px;
-            background-color: var(--eshop-white);
-            color: var(--eshop-text);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Initial Splash Overlay */
-        #splash-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--eshop-white);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .tabs {
-            height: 44px;
-            display: flex;
-            background: var(--eshop-orange);
-            flex-shrink: 0;
-            padding: 4px;
-            gap: 4px;
-            visibility: hidden; /* Hidden until loaded */
-        }
-
-        .tab {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 10px;
-            font-weight: 800;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.7);
-            cursor: pointer;
-            border-radius: 8px;
-            transition: all 0.2s ease;
-        }
-
-        .tab.active {
-            color: var(--eshop-orange);
-            background: var(--eshop-white);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        #list-container {
-            flex-grow: 1;
-            overflow: hidden;
-            position: relative;
-            padding: 8px 0;
-            background: radial-gradient(circle, #ffffff 0%, #fffbf5 100%);
-            visibility: hidden; /* Hidden until loaded */
-        }
-
-        .creation-item {
-            height: 54px;
-            margin: 6px 10px;
-            padding: 0 14px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-radius: 15px;
-            background-color: var(--eshop-white);
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 2px solid var(--eshop-border);
-            box-shadow: 0 2px 0 var(--eshop-border);
-        }
-
-        .item-text {
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            max-width: 155px;
-        }
-
-        .creation-item .title {
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--eshop-orange);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .creation-item .author {
-            font-size: 9px;
-            color: #999;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            margin-top: 1px;
-            font-weight: 500;
-        }
-
-        .item-icon {
-            width: 22px;
-            height: 22px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            background: var(--eshop-gray);
-            font-size: 12px;
-            font-weight: bold;
-            color: var(--eshop-orange);
-            flex-shrink: 0;
-            box-shadow: inset 0 -2px 0 #ccc;
-        }
-
-        .creation-item.active {
-            background-color: var(--eshop-white);
-            border-color: var(--eshop-orange);
-            box-shadow: 0 4px 0 var(--eshop-orange), 0 8px 15px rgba(255, 109, 0, 0.2);
-            transform: translateY(-2px);
-            z-index: 10;
-        }
-
-        .creation-item.active .title {
-            color: var(--eshop-orange);
-        }
-
-        .creation-item.active .author {
-            color: #666;
-        }
-
-        .creation-item.active .item-icon {
-            background: var(--eshop-light-orange);
-            color: var(--eshop-orange);
-            box-shadow: inset 0 -2px 0 #ffccbc;
-        }
-
-        #detail-view {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--eshop-light-orange);
-            display: none;
-            flex-direction: column;
-            z-index: 100;
-            padding: 24px;
-            text-align: center;
-        }
-
-        #detail-view h2 {
-            font-size: 18px;
-            margin-top: 25px;
-            margin-bottom: 4px;
-            color: var(--eshop-orange);
-            line-height: 1.2;
-            font-weight: 800;
-        }
-
-        #detail-author {
-            font-size: 11px;
-            color: #b08d75;
-            margin-bottom: 25px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-        }
-
-        .action-btn {
-            background: var(--eshop-white);
-            color: var(--eshop-orange);
-            border: 2px solid var(--eshop-border);
-            padding: 12px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 800;
-            margin-bottom: 12px;
-            box-shadow: 0 4px 0 var(--eshop-border);
-            transition: all 0.1s ease;
-        }
-
-        .action-btn.selected {
-            background: var(--eshop-white);
-            color: var(--eshop-orange) !important;
-            border-color: var(--eshop-orange);
-            box-shadow: 0 4px 0 var(--eshop-orange);
-            transform: translateY(-2px);
-        }
-
-        .footer-hint {
-            height: 28px;
-            font-size: 9px;
-            color: #ffffff;
-            text-align: center;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: var(--eshop-orange);
-            text-transform: uppercase;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            visibility: hidden; /* Hidden until loaded */
-        }
-
-        .loading-state {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-            font-size: 11px;
-            color: var(--eshop-orange);
-            gap: 10px;
-            font-weight: 700;
-        }
-
-        .spinner {
-            width: 24px;
-            height: 24px;
-            border: 3px solid rgba(255, 109, 0, 0.2);
-            border-top-color: var(--eshop-orange);
-            border-radius: 50%;
-            animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #000000; color: #ffffff; }
+        .glass-card { background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px); }
+        .category-pill { transition: all 0.2s; cursor: pointer; border-color: #333333; background-color: #111111; color: #999999; }
+        .category-pill.active { background-color: #fe5000; color: white; border-color: #fe5000; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body>
+<body class="text-gray-100">
 
-    <!-- Startup Loading Screen -->
-    <div id="splash-screen">
-        <div class="loading-state">
-            <div class="spinner"></div>
-            Loading Store
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 glass-card border-b border-gray-800">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <h1 class="text-xl font-bold tracking-tight text-white cursor-pointer" onclick="showView('home')">Rabbit<span class="text-orange-600">Creations</span></h1>
+            <button onclick="showView('add')" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm">
+                + Add Creation
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="max-w-6xl mx-auto px-4 py-8">
+        
+        <!-- Home View -->
+        <div id="view-home" class="view">
+            <div class="flex items-center gap-3 overflow-x-auto pb-6 no-scrollbar" id="category-list">
+                <button class="category-pill active border px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap" onclick="filterCategory('All')">All</button>
+                <button class="category-pill border px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap" onclick="filterCategory('Social')">Social</button>
+                <button class="category-pill border px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap" onclick="filterCategory('Games')">Games</button>
+                <button class="category-pill border px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap" onclick="filterCategory('Tools')">Tools</button>
+                <button class="category-pill border px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap" onclick="filterCategory('Entertainment')">Entertainment</button>
+            </div>
+
+            <div id="creations-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Items will be injected here -->
+                <div class="animate-pulse flex space-x-4">
+                    <div class="rounded-xl bg-gray-800 h-48 w-full"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Creation View -->
+        <div id="view-add" class="view hidden max-w-2xl mx-auto">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-white">Add New Creation</h2>
+                <p class="text-gray-400">Share your project with the community.</p>
+            </div>
+            
+            <form id="add-creation-form" class="space-y-6 bg-zinc-900 p-8 rounded-2xl shadow-sm border border-zinc-800">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Title *</label>
+                        <input type="text" id="form-title" required class="w-full bg-black px-4 py-2 rounded-lg border border-zinc-700 text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition" placeholder="e.g. Barkle">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">URL *</label>
+                        <input type="url" id="form-url" required class="w-full bg-black px-4 py-2 rounded-lg border border-zinc-700 text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition" placeholder="https://...">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Category *</label>
+                        <select id="form-category" required class="w-full bg-black px-4 py-2 rounded-lg border border-zinc-700 text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition">
+                            <option value="Social">Social</option>
+                            <option value="Games">Games</option>
+                            <option value="Tools">Tools</option>
+                            <option value="Entertainment">Entertainment</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Theme Color</label>
+                        <input type="color" id="form-theme" class="w-full h-10 p-1 bg-black rounded-lg border border-zinc-700 cursor-pointer" value="#fe5000">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Short Description *</label>
+                    <input type="text" id="form-short-desc" required class="w-full bg-black px-4 py-2 rounded-lg border border-zinc-700 text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition" placeholder="Social platform for creators">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Icon URL</label>
+                    <input type="url" id="form-icon" class="w-full bg-black px-4 py-2 rounded-lg border border-zinc-700 text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition" placeholder="https://path-to-icon.png">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Screenshot URL</label>
+                    <input type="url" id="form-screenshot" class="w-full bg-black px-4 py-2 rounded-lg border border-zinc-700 text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition" placeholder="https://path-to-screenshot.png">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Author Name</label>
+                    <input type="text" id="form-author" class="w-full bg-black px-4 py-2 rounded-lg border border-zinc-700 text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition" placeholder="Your Name">
+                </div>
+
+                <div class="flex gap-4 pt-4">
+                    <button type="submit" class="flex-1 bg-orange-600 text-white font-bold py-3 rounded-xl hover:bg-orange-700 transition">Publish Creation</button>
+                    <button type="button" onclick="showView('home')" class="px-6 py-3 rounded-xl border border-zinc-700 text-gray-300 font-medium hover:bg-zinc-800 transition">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Details View -->
+        <div id="view-details" class="view hidden animate-in fade-in duration-300">
+            <button onclick="showView('home')" class="mb-6 flex items-center text-sm font-medium text-gray-400 hover:text-orange-600 transition">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                Back to Gallery
+            </button>
+            
+            <div id="details-content">
+                <!-- Content injected here -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- QR Modal -->
+    <div id="qr-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        <div class="bg-zinc-900 rounded-3xl p-8 max-sm:w-full max-w-sm text-center shadow-2xl border border-zinc-800">
+            <h3 class="text-xl font-bold mb-2 text-white">Install Creation</h3>
+            <p class="text-gray-400 text-sm mb-6">Scan this QR code with your rabbit r1 to get the creation installed on the r1.</p>
+            <div id="qrcode-container" class="flex justify-center mb-6 p-4 bg-white rounded-2xl"></div>
+            <button onclick="closeQR()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl font-bold transition">Close</button>
         </div>
     </div>
 
-    <audio id="bg-music" loop preload="auto">
-        <source src="https://wwtv127.github.io/r1-creations-store/music.mp3" type="audio/mpeg">
-    </audio>
+    <!-- Firebase Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-    <div class="tabs" id="main-tabs">
-        <div id="tab-shop" class="tab active" onclick="setTab('shop')">Shop</div>
-        <div id="tab-inv" class="tab" onclick="setTab('inventory')">Inventory</div>
-    </div>
+        // This expects a global variable named FIREBASE_CONFIG to be present.
+        // If it's not present (like in local development), it falls back to the previous values.
+        // On GitHub, your CI/CD should replace 'REPLACE_WITH_FIREBASE_CONFIG' with your secret.
+        const configRaw = 'REPLACE_WITH_FIREBASE_CONFIG';
+        
+        const firebaseConfig = configRaw !== 'REPLACE_WITH_FIREBASE_CONFIG' 
+            ? JSON.parse(configRaw) 
+            : {
+                apiKey: "AIzaSyANzhTIQbJgfapnVwQsLnW278s5SOVRizY",
+                authDomain: "xstream-a29a5.firebaseapp.com",
+                databaseURL: "https://xstream-a29a5-default-rtdb.firebaseio.com",
+                projectId: "xstream-a29a5",
+                storageBucket: "xstream-a29a5.firebasestorage.app",
+                messagingSenderId: "1015069413945",
+                appId: "1:1015069413945:web:efe987c7530dfc688273e8",
+                measurementId: "G-LD32GG0E0H"
+            };
 
-    <div id="list-container">
-        <!-- Inner loading while fetching shop list -->
-        <div class="loading-state">
-            <div class="spinner"></div>
-            Connecting to Store...
-        </div>
-    </div>
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'creations-store-v1';
 
-    <div id="detail-view">
-        <h2 id="detail-title">App Name</h2>
-        <div id="detail-author">by Author</div>
-        <div id="primary-action" class="action-btn selected">Get</div>
-        <div id="secondary-action" class="action-btn">Back</div>
-    </div>
+        let creations = [];
+        let selectedCategory = 'All';
 
-    <div class="footer-hint" id="hint-text">
-        Scroll to browse • Side click to select
-    </div>
+        // Auth initialization
+        signInAnonymously(auth).catch(err => console.error("Auth failed", err));
 
-    <script>
-        const DATA_URL = "https://wwtv127.github.io/r1-creations-store/array.txt";
-        let shopItems = [];
-        let inventory = [];
-        let currentTab = 'shop'; 
-        let selectedIndex = 0;
-        let isDetailView = false;
-        let detailSelection = 0;
-        let musicStarted = false;
+        // Firestore Path Rule 1 Implementation
+        const creationsCol = collection(db, 'artifacts', appId, 'public', 'data', 'creations');
 
-        const splash = document.getElementById('splash-screen');
-        const mainTabs = document.getElementById('main-tabs');
-        const listContainer = document.getElementById('list-container');
-        const footerHint = document.getElementById('hint-text');
+        // Real-time listener
+        onSnapshot(creationsCol, (snapshot) => {
+            creations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderCreations();
+        }, (err) => console.error("Firestore error:", err));
 
-        const detailView = document.getElementById('detail-view');
-        const detailTitle = document.getElementById('detail-title');
-        const detailAuthor = document.getElementById('detail-author');
-        const primaryBtn = document.getElementById('primary-action');
-        const secondaryBtn = document.getElementById('secondary-action');
-        const bgMusic = document.getElementById('bg-music');
+        // View Switcher
+        window.showView = (viewName, itemId = null) => {
+            document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+            document.getElementById(`view-${viewName}`).classList.remove('hidden');
+            window.scrollTo(0, 0);
 
-        window.onload = async () => {
-            await loadInventory();
-            await fetchShopItems();
-            forcePlayAudio();
+            if (viewName === 'details' && itemId) {
+                renderDetails(itemId);
+            }
         };
 
-        function forcePlayAudio() {
-            const attempt = () => {
-                bgMusic.play().then(() => {
-                    // Audio is playing, hide splash and show UI
-                    musicStarted = true;
-                    splash.style.display = 'none';
-                    mainTabs.style.visibility = 'visible';
-                    listContainer.style.visibility = 'visible';
-                    footerHint.style.visibility = 'visible';
-                    renderList(); // Force render once UI becomes visible
-                }).catch(e => {
-                    // Retry until audio starts
-                    setTimeout(attempt, 500);
-                });
-            };
-            attempt();
-        }
+        // Render Home Grid
+        function renderCreations() {
+            const grid = document.getElementById('creations-grid');
+            const filtered = selectedCategory === 'All' 
+                ? creations 
+                : creations.filter(c => c.category === selectedCategory);
 
-        async function loadInventory() {
-            try {
-                if (window.creationStorage) {
-                    const data = await window.creationStorage.plain.getItem('my_creations');
-                    if (data) inventory = JSON.parse(atob(data));
-                }
-            } catch (e) { console.error("Storage error", e); }
-        }
-
-        async function saveInventory() {
-            try {
-                if (window.creationStorage) {
-                    await window.creationStorage.plain.setItem('my_creations', btoa(JSON.stringify(inventory)));
-                }
-            } catch (e) { console.error("Storage error", e); }
-        }
-
-        async function fetchShopItems() {
-            try {
-                const response = await fetch(DATA_URL);
-                const text = await response.text();
-                shopItems = JSON.parse(text);
-                if (musicStarted) renderList();
-            } catch (error) {
-                listContainer.innerHTML = '<div class="loading-state" style="color:red">Connection Failed</div>';
-            }
-        }
-
-        function setTab(tabName) {
-            if (isDetailView || !musicStarted) return;
-            currentTab = tabName;
-            selectedIndex = 0;
-            document.getElementById('tab-shop').classList.toggle('active', currentTab === 'shop');
-            document.getElementById('tab-inv').classList.toggle('active', currentTab === 'inventory');
-            renderList();
-        }
-
-        function renderList() {
-            if (!musicStarted) return; // Wait for audio splash to clear
-            
-            listContainer.innerHTML = '';
-            const list = currentTab === 'shop' ? shopItems : inventory;
-
-            if (list.length === 0) {
-                listContainer.innerHTML = `<div class="loading-state">${currentTab === 'shop' ? 'No items available' : 'Inventory empty'}</div>`;
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-20 text-center text-gray-500">No creations found in this category.</div>`;
                 return;
             }
 
-            list.forEach((item, index) => {
-                const div = document.createElement('div');
-                div.className = `creation-item ${index === selectedIndex ? 'active' : ''}`;
-                div.id = `item-${index}`;
-                
-                const textWrapper = document.createElement('div');
-                textWrapper.className = 'item-text';
+            grid.innerHTML = filtered.map(item => `
+                <div onclick="showView('details', '${item.id}')" class="group cursor-pointer bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                    <div class="h-48 overflow-hidden bg-zinc-800 relative">
+                        ${item.screenshotUrl 
+                            ? `<img src="${item.screenshotUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://via.placeholder.com/400x200?text=No+Preview'">`
+                            : `<div class="w-full h-full flex items-center justify-center text-white font-bold text-4xl" style="background: ${item.themeColor || '#fe5000'}">${item.title.charAt(0)}</div>`
+                        }
+                        <div class="absolute top-3 left-3 px-3 py-1 bg-black/80 backdrop-blur rounded-full text-xs font-bold text-white border border-zinc-700 shadow-sm">${item.category}</div>
+                    </div>
+                    <div class="p-5">
+                        <div class="flex items-center gap-3 mb-2">
+                            ${item.iconUrl ? `<img src="${item.iconUrl}" class="w-8 h-8 rounded-lg shadow-sm">` : `<div class="w-8 h-8 rounded-lg" style="background:${item.themeColor}"></div>`}
+                            <h3 class="font-bold text-lg leading-tight text-white">${item.title}</h3>
+                        </div>
+                        <p class="text-gray-400 text-sm line-clamp-2">${item.description}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
 
-                const title = document.createElement('div');
-                title.className = 'title';
-                title.innerText = item.title;
+        // Category Filter
+        window.filterCategory = (cat) => {
+            selectedCategory = cat;
+            document.querySelectorAll('.category-pill').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.innerText === cat) btn.classList.add('active');
+            });
+            renderCreations();
+        };
 
-                const author = document.createElement('div');
-                author.className = 'author';
-                author.innerText = item.author ? `by ${item.author}` : '';
-                
-                textWrapper.appendChild(title);
-                textWrapper.appendChild(author);
+        // Details Page
+        function renderDetails(id) {
+            const item = creations.find(c => c.id === id);
+            if (!item) return;
 
-                const icon = document.createElement('div');
-                icon.className = 'item-icon';
-                if (currentTab === 'shop') {
-                    const isInstalled = inventory.some(i => i.url === item.url);
-                    icon.innerText = isInstalled ? '✓' : '+';
-                } else {
-                    icon.innerText = '▶';
-                }
-                
-                div.appendChild(textWrapper);
-                div.appendChild(icon);
-                listContainer.appendChild(div);
+            const container = document.getElementById('details-content');
+            container.innerHTML = `
+                <div class="bg-zinc-900 rounded-3xl overflow-hidden shadow-xl border border-zinc-800">
+                    <div class="relative h-64 sm:h-96 bg-zinc-800">
+                        <img src="${item.screenshotUrl || 'https://via.placeholder.com/1200x600?text=No+Image'}" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
+                        <div class="absolute bottom-6 left-6 right-6 flex items-end justify-between text-white">
+                            <div class="flex items-end gap-6">
+                                <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl shadow-2xl p-1 bg-zinc-900 border border-zinc-800 shrink-0">
+                                    ${item.iconUrl 
+                                        ? `<img src="${item.iconUrl}" class="w-full h-full rounded-xl object-cover">`
+                                        : `<div class="w-full h-full rounded-xl flex items-center justify-center text-4xl font-black" style="background:${item.themeColor}">${item.title[0]}</div>`
+                                    }
+                                </div>
+                                <div class="pb-2">
+                                    <h2 class="text-3xl font-black leading-tight">${item.title}</h2>
+                                    <p class="text-gray-300 font-medium">${item.category} • By ${item.author || 'Anonymous'}</p>
+                                </div>
+                            </div>
+                            
+                            <button id="install-btn" class="mb-2 bg-orange-600 hover:bg-orange-700 text-white flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition shadow-lg active:scale-95">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                                <span>Install</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="p-6 sm:p-10">
+                        <div class="space-y-6">
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Description</h4>
+                                <p class="text-gray-300 text-lg leading-relaxed whitespace-pre-line">${item.description}</p>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Website</h4>
+                                <a href="${item.url}" target="_blank" class="text-orange-500 font-semibold hover:underline flex items-center">
+                                    ${item.url}
+                                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('install-btn').onclick = () => showQR(item);
+        }
+
+        // QR Functionality
+        window.showQR = (item) => {
+            const modal = document.getElementById('qr-modal');
+            const container = document.getElementById('qrcode-container');
+            container.innerHTML = "";
+            
+            const exportData = {
+                title: item.title,
+                url: item.url,
+                description: item.description,
+                iconUrl: item.iconUrl || "",
+                themeColor: item.themeColor || "#000000",
+                author: item.author || "",
+                screenshotUrl: item.screenshotUrl || "",
+                category: item.category
+            };
+
+            new QRCode(container, {
+                text: JSON.stringify(exportData),
+                width: 256,
+                height: 256,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
             });
 
-            const activeEl = document.getElementById(`item-${selectedIndex}`);
-            if (activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+            modal.classList.remove('hidden');
+        };
 
-        function updateSelection(direction) {
-            if (!musicStarted) return;
-            const list = currentTab === 'shop' ? shopItems : inventory;
-            if (list.length === 0 && !isDetailView) return;
-            
-            if (isDetailView) {
-                detailSelection = detailSelection === 0 ? 1 : 0;
-                updateDetailUI();
-                return;
+        window.closeQR = () => {
+            document.getElementById('qr-modal').classList.add('hidden');
+        };
+
+        // Form Handling
+        document.getElementById('add-creation-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Publishing...";
+
+            try {
+                const data = {
+                    title: document.getElementById('form-title').value,
+                    url: document.getElementById('form-url').value,
+                    category: document.getElementById('form-category').value,
+                    description: document.getElementById('form-short-desc').value,
+                    themeColor: document.getElementById('form-theme').value,
+                    iconUrl: document.getElementById('form-icon').value,
+                    screenshotUrl: document.getElementById('form-screenshot').value,
+                    author: document.getElementById('form-author').value,
+                    createdAt: serverTimestamp()
+                };
+
+                await addDoc(creationsCol, data);
+                e.target.reset();
+                showView('home');
+            } catch (err) {
+                console.error("Error adding creation:", err);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Publish Creation";
             }
+        };
 
-            if (direction === 'up' && selectedIndex > 0) {
-                selectedIndex--;
-            } else if (direction === 'down' && selectedIndex < list.length - 1) {
-                selectedIndex++;
-            }
-            renderList();
-        }
-
-        function handleAction() {
-            if (!musicStarted) return;
-            const list = currentTab === 'shop' ? shopItems : inventory;
-            if (list.length === 0) return;
-
-            const item = list[selectedIndex];
-
-            if (!isDetailView) {
-                openDetail(item);
-            } else {
-                if (detailSelection === 1 && currentTab === 'shop') {
-                    closeDetail(); 
-                } else {
-                    executePrimaryAction(item);
-                }
-            }
-        }
-
-        function openDetail(item) {
-            isDetailView = true;
-            detailSelection = 0;
-            detailTitle.innerText = item.title;
-            detailAuthor.innerText = item.author ? `by ${item.author}` : '';
-            
-            const isInstalled = inventory.some(i => i.url === item.url);
-            
-            if (currentTab === 'shop') {
-                primaryBtn.innerText = isInstalled ? "Deinstall" : "Install";
-                secondaryBtn.innerText = "Back";
-                secondaryBtn.style.color = "#888";
-            } else {
-                primaryBtn.innerText = "Open App";
-                secondaryBtn.innerText = "Delete";
-                secondaryBtn.style.color = "#d32f2f";
-            }
-            
-            detailView.style.display = 'flex';
-            updateDetailUI();
-        }
-
-        function updateDetailUI() {
-            primaryBtn.classList.toggle('selected', detailSelection === 0);
-            secondaryBtn.classList.toggle('selected', detailSelection === 1);
-        }
-
-        function closeDetail() {
-            isDetailView = false;
-            detailView.style.display = 'none';
-            renderList();
-        }
-
-        async function executePrimaryAction(item) {
-            const installedIndex = inventory.findIndex(i => i.url === item.url);
-            
-            if (currentTab === 'shop') {
-                if (installedIndex > -1) {
-                    inventory.splice(installedIndex, 1);
-                } else {
-                    inventory.push(item);
-                }
-                await saveInventory();
-                closeDetail();
-            } else {
-                if (detailSelection === 0) {
-                    window.location.href = item.url;
-                } else {
-                    if (installedIndex > -1) {
-                        inventory.splice(installedIndex, 1);
-                        await saveInventory();
-                    }
-                    selectedIndex = 0;
-                    closeDetail();
-                }
-            }
-        }
-
-        window.addEventListener("scrollUp", () => updateSelection('up'));
-        window.addEventListener("scrollDown", () => updateSelection('down'));
-        window.addEventListener("sideClick", () => handleAction());
-
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowUp') updateSelection('up');
-            if (e.key === 'ArrowDown') updateSelection('down');
-            if (e.key === 'Enter') handleAction();
-        });
     </script>
 </body>
 </html>
