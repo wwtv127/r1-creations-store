@@ -203,8 +203,23 @@
             <h3 class="text-xl font-bold mb-4 text-white">Sign Out?</h3>
             <p class="text-zinc-400 text-sm mb-8">Are you sure you want to sign out?</p>
             <div class="flex gap-3">
-                <button onclick="triggerLogout()" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition">Sign Out</button>
-                <button onclick="toggleSignOutModal(false)" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 rounded-xl transition">Cancel</button>
+                <button onclick="triggerLogout()" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition active:scale-95">Sign Out</button>
+                <button onclick="toggleSignOutModal(false)" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 rounded-xl transition active:scale-95">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Creation Confirmation Modal -->
+    <div id="delete-creation-modal" class="fixed inset-0 z-[110] hidden flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
+        <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center">
+            <div class="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold mb-4 text-white">Delete Creation?</h3>
+            <p class="text-zinc-400 text-sm mb-8">This will permanently remove your creation from the gallery. This action cannot be undone.</p>
+            <div class="flex gap-3">
+                <button id="confirm-delete-creation-btn" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition active:scale-95">Delete</button>
+                <button onclick="toggleDeleteCreationModal(false)" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 rounded-xl transition active:scale-95">Cancel</button>
             </div>
         </div>
     </div>
@@ -268,6 +283,7 @@
             let currentUser = null;
             let intentToAdd = false;
             let reviewToDelete = null;
+            let creationToDeleteId = null;
 
             const creationsCol = collection(db, 'artifacts', appId, 'public', 'data', 'creations');
             const reviewsCol = collection(db, 'artifacts', appId, 'public', 'data', 'reviews');
@@ -315,6 +331,11 @@
                 document.getElementById('delete-review-modal').classList.toggle('hidden', !s);
                 if (!s) reviewToDelete = null;
             };
+            window.toggleDeleteCreationModal = (s, id = null) => {
+                document.getElementById('delete-creation-modal').classList.toggle('hidden', !s);
+                creationToDeleteId = s ? id : null;
+            };
+
             window.confirmSignOut = () => { window.toggleProfileDropdown(); window.toggleSignOutModal(true); };
             window.toggleProfileDropdown = () => document.getElementById('profile-dropdown').classList.toggle('hidden');
             window.triggerGoogleLogin = () => signInWithPopup(auth, provider);
@@ -327,6 +348,17 @@
                     try {
                         await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reviews', reviewToDelete.id));
                         window.toggleDeleteReviewModal(false);
+                    } catch(err) { console.error(err); }
+                }
+            };
+
+            // Handle Creation Deletion
+            document.getElementById('confirm-delete-creation-btn').onclick = async () => {
+                if (creationToDeleteId) {
+                    try {
+                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'creations', creationToDeleteId));
+                        window.toggleDeleteCreationModal(false);
+                        window.showView('home');
                     } catch(err) { console.error(err); }
                 }
             };
@@ -400,6 +432,7 @@
                 const avg = getAverageRating(id);
                 const itemReviews = reviews.filter(r => r.creationId === id).sort((a,b) => b.createdAt?.seconds - a.createdAt?.seconds);
                 const myExistingReview = (currentUser && !currentUser.isAnonymous) ? reviews.find(r => r.creationId === id && r.userId === currentUser.uid) : null;
+                const isOwner = currentUser && currentUser.uid === item.userId;
 
                 const container = document.getElementById('details-content');
                 container.innerHTML = `
@@ -423,10 +456,13 @@
                                         </div>
                                     </div>
                                 </div>
-                                <button id="install-btn" class="mb-2 bg-orange-600 hover:bg-orange-700 text-white flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition shadow-lg active:scale-95">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                    <span>Install</span>
-                                </button>
+                                <div class="flex gap-2">
+                                    ${isOwner ? `<button id="delete-creation-btn-details" class="mb-2 bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white px-4 py-3 rounded-xl font-bold transition shadow-lg active:scale-95 border border-red-500/30">Delete</button>` : ''}
+                                    <button id="install-btn" class="mb-2 bg-orange-600 hover:bg-orange-700 text-white flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition shadow-lg active:scale-95">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                        <span>Install</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div class="p-8">
@@ -489,9 +525,14 @@
                 
                 document.getElementById('install-btn').onclick = () => showQR(item);
                 
-                const deleteBtn = document.getElementById('delete-review-btn');
-                if (deleteBtn && myExistingReview) {
-                    deleteBtn.onclick = () => {
+                const deleteCreBtn = document.getElementById('delete-creation-btn-details');
+                if (deleteCreBtn) {
+                    deleteCreBtn.onclick = () => window.toggleDeleteCreationModal(true, item.id);
+                }
+
+                const deleteRevBtn = document.getElementById('delete-review-btn');
+                if (deleteRevBtn && myExistingReview) {
+                    deleteRevBtn.onclick = () => {
                         reviewToDelete = myExistingReview;
                         window.toggleDeleteReviewModal(true);
                     };
