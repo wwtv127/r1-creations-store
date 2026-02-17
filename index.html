@@ -27,14 +27,29 @@
                 <button id="nav-my-creations" onclick="showView('my-creations')" class="hidden text-gray-400 hover:text-white text-sm font-medium transition">
                     My Creations
                 </button>
-                <button id="nav-login" onclick="showView('auth')" class="text-gray-400 hover:text-white text-sm font-medium transition">
+                <button id="nav-login" onclick="toggleAuthModal(true)" class="text-gray-400 hover:text-white text-sm font-medium transition">
                     Sign In
                 </button>
                 <button onclick="handleCreationAuth()" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm">
                     + Add Creation
                 </button>
-                <div id="user-profile" class="hidden ml-2">
-                    <img id="user-avatar" src="" class="w-8 h-8 rounded-full border border-gray-700">
+                
+                <!-- User Profile Dropdown Trigger -->
+                <div id="user-profile" class="hidden relative ml-2">
+                    <button onclick="toggleProfileDropdown()" class="focus:outline-none">
+                        <img id="user-avatar" src="" class="w-8 h-8 rounded-full border border-gray-700 hover:border-orange-500 transition">
+                    </button>
+                    
+                    <!-- Profile Overlay/Dropdown -->
+                    <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl py-2 z-50">
+                        <div class="px-4 py-3 border-b border-zinc-800 flex flex-col items-center text-center">
+                            <img id="dropdown-avatar" src="" class="w-12 h-12 rounded-full mb-2 border border-zinc-700">
+                            <p id="dropdown-name" class="text-sm font-bold text-white truncate w-full"></p>
+                        </div>
+                        <button onclick="triggerLogout()" class="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-zinc-800 transition">
+                            Sign Out
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -57,29 +72,6 @@
                 <div class="animate-pulse flex space-x-4">
                     <div class="rounded-xl bg-zinc-800 h-48 w-full"></div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Auth/Welcome View -->
-        <div id="view-auth" class="view hidden py-12 flex flex-col items-center justify-center text-center">
-            <div class="mb-8">
-                <h1 class="text-5xl font-black tracking-tighter text-white mb-2">Rabbit<span class="text-orange-600">Creations</span></h1>
-                <p class="text-zinc-500 text-lg">Join the community of r1 creators.</p>
-            </div>
-            
-            <div class="bg-zinc-900 border border-zinc-800 p-10 rounded-3xl shadow-2xl max-w-sm w-full">
-                <h2 class="text-xl font-bold mb-6">Welcome Back</h2>
-                <p class="text-zinc-400 text-sm mb-8">Sign in with Google to publish and manage your creations.</p>
-                <button onclick="triggerGoogleLogin()" class="w-full flex items-center justify-center gap-3 bg-white text-black font-bold py-3 rounded-xl hover:bg-zinc-200 transition active:scale-95">
-                    <svg class="w-5 h-5" viewBox="0 0 24 24">
-                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                    </svg>
-                    Continue with Google
-                </button>
-                <button onclick="showView('home')" class="mt-4 text-zinc-500 hover:text-white text-sm transition">Maybe later</button>
             </div>
         </div>
 
@@ -167,6 +159,30 @@
 
     </main>
 
+    <!-- Auth Welcome Overlay -->
+    <div id="auth-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
+        <div class="bg-zinc-900 border border-zinc-800 p-10 rounded-3xl shadow-2xl max-w-sm w-full text-center relative">
+            <button onclick="toggleAuthModal(false)" class="absolute top-4 right-4 text-zinc-500 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <div class="mb-8">
+                <h1 class="text-4xl font-black tracking-tighter text-white mb-2">Rabbit<span class="text-orange-600">Creations</span></h1>
+                <p class="text-zinc-500 text-sm">Join the community of r1 creators.</p>
+            </div>
+            <h2 class="text-xl font-bold mb-6 text-white">Welcome Back</h2>
+            <p class="text-zinc-400 text-sm mb-8">Sign in with Google to publish and manage your creations.</p>
+            <button onclick="triggerGoogleLogin()" class="w-full flex items-center justify-center gap-3 bg-white text-black font-bold py-3 rounded-xl hover:bg-zinc-200 transition active:scale-95">
+                <svg class="w-5 h-5" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Continue with Google
+            </button>
+        </div>
+    </div>
+
     <!-- QR Modal -->
     <div id="qr-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
         <div class="bg-zinc-900 rounded-3xl p-8 max-sm:w-full max-w-sm text-center shadow-2xl border border-zinc-800">
@@ -181,7 +197,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         const raw_secret = `REPLACE_WITH_FIREBASE_CONFIG`;
         
@@ -225,6 +241,8 @@
                 const navLogin = document.getElementById('nav-login');
                 const profile = document.getElementById('user-profile');
                 const avatar = document.getElementById('user-avatar');
+                const ddAvatar = document.getElementById('dropdown-avatar');
+                const ddName = document.getElementById('dropdown-name');
                 const authorInput = document.getElementById('form-author');
 
                 if (user && !user.isAnonymous) {
@@ -232,7 +250,10 @@
                     navLogin.classList.add('hidden');
                     profile.classList.remove('hidden');
                     avatar.src = user.photoURL;
+                    ddAvatar.src = user.photoURL;
+                    ddName.innerText = user.displayName;
                     authorInput.value = user.displayName;
+                    window.toggleAuthModal(false);
                 } else {
                     navMy.classList.add('hidden');
                     navLogin.classList.remove('hidden');
@@ -241,6 +262,24 @@
                 }
                 renderCreations();
             });
+
+            window.toggleAuthModal = (show) => {
+                const modal = document.getElementById('auth-modal');
+                modal.classList.toggle('hidden', !show);
+            };
+
+            window.toggleProfileDropdown = () => {
+                const dd = document.getElementById('profile-dropdown');
+                dd.classList.toggle('hidden');
+            };
+
+            // Close dropdown when clicking outside
+            window.onclick = function(event) {
+                if (!event.target.closest('#user-profile')) {
+                    const dd = document.getElementById('profile-dropdown');
+                    if (dd) dd.classList.add('hidden');
+                }
+            };
 
             window.triggerGoogleLogin = async () => {
                 try {
@@ -251,9 +290,18 @@
                 }
             };
 
+            window.triggerLogout = async () => {
+                try {
+                    await signOut(auth);
+                    window.showView('home');
+                } catch (err) {
+                    console.error("Logout failed", err);
+                }
+            };
+
             window.handleCreationAuth = () => {
                 if (!currentUser || currentUser.isAnonymous) {
-                    window.showView('auth');
+                    window.toggleAuthModal(true);
                 } else {
                     window.showView('add');
                 }
@@ -280,14 +328,12 @@
                 
                 if (!grid || !myGrid) return;
 
-                // Main Gallery Filtering
                 let filtered = selectedCategory === 'All' 
                     ? creations 
                     : creations.filter(c => c.category === selectedCategory);
 
                 grid.innerHTML = filtered.map(item => createCardHtml(item, false)).join('') || `<div class="col-span-full py-20 text-center text-gray-500 uppercase tracking-widest text-xs">No creations found</div>`;
 
-                // My Creations Filtering
                 if (currentUser && !currentUser.isAnonymous) {
                     const mine = creations.filter(c => c.userId === currentUser.uid);
                     myGrid.innerHTML = mine.map(item => createCardHtml(item, true)).join('') || `<div class="col-span-full py-20 text-center text-gray-500 uppercase tracking-widest text-xs">You haven't published any creations yet</div>`;
