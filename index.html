@@ -284,10 +284,13 @@
                     
                     window.toggleAuthModal(false);
                     
-                    // FIXED: Check if they specifically clicked "Add Creation" earlier.
+                    // FIXED: Check intent here. Intent is set when they click +Add Creation while logged out.
                     if (intentToAdd) {
-                        window.showView('add');
-                        intentToAdd = false;
+                        // Small timeout ensures the UI state for login is fully cleared before view switch
+                        setTimeout(() => {
+                            window.showView('add');
+                            intentToAdd = false;
+                        }, 50);
                     }
                 } else {
                     navMy.classList.add('hidden');
@@ -301,7 +304,7 @@
             window.toggleAuthModal = (show) => {
                 const modal = document.getElementById('auth-modal');
                 modal.classList.toggle('hidden', !show);
-                if (!show) intentToAdd = false; // Reset intent if they manually close
+                // We DON'T reset intentToAdd to false here because triggerGoogleLogin is called while modal is open.
             };
 
             window.toggleSignOutModal = (show) => {
