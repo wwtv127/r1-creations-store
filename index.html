@@ -19,7 +19,6 @@
         .star-rating label { color: #333; cursor: pointer; font-size: 2rem; transition: color 0.2s; }
         .star-rating label:hover, .star-rating label:hover ~ label, .star-rating input:checked ~ label { color: #fe5000; }
         
-        /* Visibility Radio Styling */
         .visibility-label { transition: all 0.2s ease; border-width: 2px; }
         input[name="visibility"]:checked + .visibility-label { 
             background-color: #fe5000; 
@@ -91,21 +90,22 @@
             <div class="mb-8 flex items-center justify-between">
                 <div>
                     <h2 class="text-2xl font-bold text-white">My Creations</h2>
-                    <p class="text-gray-400">Manage your Creations</p>
+                    <p class="text-gray-400">Manage the creations you have published.</p>
                 </div>
                 <button onclick="showView('home')" class="text-sm font-medium text-gray-400 hover:text-white transition">Back to Store</button>
             </div>
             <div id="my-creations-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         </div>
 
-        <!-- Add Creation View -->
+        <!-- Add/Edit Creation View -->
         <div id="view-add" class="view hidden max-w-2xl mx-auto">
             <div class="mb-8">
-                <h2 class="text-2xl font-bold text-white">Add New Creation</h2>
-                <p class="text-gray-400">Share your creation with the community.</p>
+                <h2 id="form-header" class="text-2xl font-bold text-white">Add New Creation</h2>
+                <p id="form-sub-header" class="text-gray-400">Share your creation with the community.</p>
             </div>
             
             <form id="add-creation-form" class="space-y-6 bg-zinc-900 p-8 rounded-2xl shadow-sm border border-zinc-800">
+                <input type="hidden" id="form-id">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-300 mb-1">Title *</label>
@@ -169,7 +169,7 @@
                 </div>
 
                 <div class="flex gap-4 pt-4">
-                    <button type="submit" class="flex-1 bg-orange-600 text-white font-bold py-3 rounded-xl hover:bg-orange-700 transition">Publish Creation</button>
+                    <button type="submit" id="form-submit-btn" class="flex-1 bg-orange-600 text-white font-bold py-3 rounded-xl hover:bg-orange-700 transition">Publish Creation</button>
                     <button type="button" onclick="showView('home')" class="px-6 py-3 rounded-xl border border-zinc-700 text-gray-300 font-medium hover:bg-zinc-800 transition">Cancel</button>
                 </div>
             </form>
@@ -186,7 +186,7 @@
 
     </main>
 
-    <!-- Auth Welcome Overlay -->
+    <!-- Modals -->
     <div id="auth-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
         <div class="bg-zinc-900 border border-zinc-800 p-10 rounded-3xl shadow-2xl max-w-sm w-full text-center relative">
             <button onclick="toggleAuthModal(false)" class="absolute top-4 right-4 text-zinc-500 hover:text-white">
@@ -210,7 +210,6 @@
         </div>
     </div>
 
-    <!-- Sign Out Confirmation Modal -->
     <div id="signout-modal" class="fixed inset-0 z-[110] hidden flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
         <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center">
             <h3 class="text-xl font-bold mb-4 text-white">Sign Out?</h3>
@@ -222,14 +221,13 @@
         </div>
     </div>
 
-    <!-- Delete Creation Confirmation Modal -->
     <div id="delete-creation-modal" class="fixed inset-0 z-[110] hidden flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
         <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center">
             <div class="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
             </div>
             <h3 class="text-xl font-bold mb-4 text-white">Delete Creation?</h3>
-            <p class="text-zinc-400 text-sm mb-8">This will permanently remove your creation from the gallery. This action cannot be undone.</p>
+            <p class="text-zinc-400 text-sm mb-8">This action cannot be undone.</p>
             <div class="flex gap-3">
                 <button id="confirm-delete-creation-btn" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition active:scale-95">Delete</button>
                 <button onclick="toggleDeleteCreationModal(false)" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 rounded-xl transition active:scale-95">Cancel</button>
@@ -237,29 +235,13 @@
         </div>
     </div>
 
-    <!-- Make Public Confirmation Modal -->
-    <div id="publish-creation-modal" class="fixed inset-0 z-[110] hidden flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
-        <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center">
-            <div class="w-16 h-16 bg-orange-500/10 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
-            </div>
-            <h3 class="text-xl font-bold mb-4 text-white">Make Public?</h3>
-            <p class="text-zinc-400 text-sm mb-8">This will make your creation visible to everyone in the store. Are you ready to go public?</p>
-            <div class="flex gap-3">
-                <button id="confirm-publish-creation-btn" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-xl transition active:scale-95">Publish</button>
-                <button onclick="togglePublishCreationModal(false)" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 rounded-xl transition active:scale-95">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Delete Review Confirmation Modal -->
     <div id="delete-review-modal" class="fixed inset-0 z-[110] hidden flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
         <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center">
             <div class="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
             </div>
             <h3 class="text-xl font-bold mb-4 text-white">Delete Review?</h3>
-            <p class="text-zinc-400 text-sm mb-8">This action cannot be undone. Your feedback will be permanently removed.</p>
+            <p class="text-zinc-400 text-sm mb-8">This action cannot be undone.</p>
             <div class="flex gap-3">
                 <button id="confirm-delete-review-btn" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition active:scale-95">Delete</button>
                 <button onclick="toggleDeleteReviewModal(false)" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 rounded-xl transition active:scale-95">Cancel</button>
@@ -267,7 +249,6 @@
         </div>
     </div>
 
-    <!-- QR Modal -->
     <div id="qr-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
         <div class="bg-zinc-900 rounded-3xl p-8 max-sm:w-full max-w-sm text-center shadow-2xl border border-zinc-800">
             <h3 class="text-xl font-bold mb-2 text-white">Install Creation</h3>
@@ -290,15 +271,12 @@
                 const startIdx = raw_secret.indexOf('{');
                 const endIdx = raw_secret.lastIndexOf('}');
                 if (startIdx === -1 || endIdx === -1) throw new Error("Invalid Config");
-
                 let jsonStr = raw_secret.substring(startIdx, endIdx + 1);
                 const formattedStr = jsonStr.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":').replace(/:\s*'([^']*)'/g, ': "$1"').replace(/,\s*([\]}])/g, '$1'); 
-
                 const firebaseConfig = JSON.parse(formattedStr);
                 const app = initializeApp(firebaseConfig);
                 const db = getFirestore(app);
                 const auth = getAuth(app);
-                
                 initLogic(db, auth);
             } catch (err) { console.error(err); }
         }
@@ -312,7 +290,6 @@
             let intentToAdd = false;
             let reviewToDelete = null;
             let creationToDeleteId = null;
-            let creationToPublishId = null;
 
             const creationsCol = collection(db, 'artifacts', appId, 'public', 'data', 'creations');
             const reviewsCol = collection(db, 'artifacts', appId, 'public', 'data', 'reviews');
@@ -330,7 +307,7 @@
                     document.getElementById('form-author').value = user.displayName;
                     window.toggleAuthModal(false);
                     if (intentToAdd) {
-                        setTimeout(() => { window.showView('add'); intentToAdd = false; }, 50);
+                        setTimeout(() => { window.showAddView(); intentToAdd = false; }, 50);
                     }
                 } else {
                     document.getElementById('nav-my-creations').classList.add('hidden');
@@ -364,16 +341,12 @@
                 document.getElementById('delete-creation-modal').classList.toggle('hidden', !s);
                 creationToDeleteId = s ? id : null;
             };
-            window.togglePublishCreationModal = (s, id = null) => {
-                document.getElementById('publish-creation-modal').classList.toggle('hidden', !s);
-                creationToPublishId = s ? id : null;
-            };
 
             window.confirmSignOut = () => { window.toggleProfileDropdown(); window.toggleSignOutModal(true); };
             window.toggleProfileDropdown = () => document.getElementById('profile-dropdown').classList.toggle('hidden');
             window.triggerGoogleLogin = () => signInWithPopup(auth, provider);
             window.triggerLogout = () => { signOut(auth); window.toggleSignOutModal(false); window.showView('home'); };
-            window.handleCreationAuth = () => { if (!currentUser || currentUser.isAnonymous) { intentToAdd = true; window.toggleAuthModal(true); } else { window.showView('add'); } };
+            window.handleCreationAuth = () => { if (!currentUser || currentUser.isAnonymous) { intentToAdd = true; window.toggleAuthModal(true); } else { window.showAddView(); } };
 
             document.getElementById('confirm-delete-review-btn').onclick = async () => {
                 if (reviewToDelete) {
@@ -394,15 +367,39 @@
                 }
             };
 
-            document.getElementById('confirm-publish-creation-btn').onclick = async () => {
-                if (creationToPublishId) {
-                    try {
-                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'creations', creationToPublishId), {
-                            visibility: 'public'
-                        });
-                        window.togglePublishCreationModal(false);
-                    } catch(err) { console.error(err); }
-                }
+            window.showAddView = () => {
+                document.getElementById('form-header').innerText = "Add New Creation";
+                document.getElementById('form-sub-header').innerText = "Share your creation with the community.";
+                document.getElementById('form-submit-btn').innerText = "Publish Creation";
+                document.getElementById('form-id').value = "";
+                document.getElementById('add-creation-form').reset();
+                document.getElementById('form-author').value = currentUser?.displayName || "";
+                window.showView('add');
+            };
+
+            window.initiateEditCreation = (e, id) => {
+                e.stopPropagation();
+                const item = creations.find(c => c.id === id);
+                if (!item) return;
+                
+                document.getElementById('form-header').innerText = "Edit Creation";
+                document.getElementById('form-sub-header').innerText = "Update your creation details.";
+                document.getElementById('form-submit-btn').innerText = "Update Creation";
+                
+                document.getElementById('form-id').value = item.id;
+                document.getElementById('form-title').value = item.title;
+                document.getElementById('form-url').value = item.url;
+                document.getElementById('form-category').value = item.category;
+                document.getElementById('form-short-desc').value = item.description;
+                document.getElementById('form-theme').value = item.themeColor;
+                document.getElementById('form-icon').value = item.iconUrl || "";
+                document.getElementById('form-screenshot').value = item.screenshotUrl || "";
+                document.getElementById('form-author').value = item.author;
+                
+                const visRad = document.querySelector(`input[name="visibility"][value="${item.visibility}"]`);
+                if (visRad) visRad.checked = true;
+
+                window.showView('add');
             };
 
             window.showView = (v, itemId = null) => {
@@ -431,7 +428,6 @@
 
                 let filtered = creations.filter(c => c.visibility !== 'private');
                 if (selectedCategory !== 'All') filtered = filtered.filter(c => c.category === selectedCategory);
-                
                 grid.innerHTML = filtered.map(c => createCardHtml(c, false)).join('') || `<div class="col-span-full py-20 text-center text-gray-500 uppercase tracking-widest text-xs">No creations</div>`;
 
                 if (currentUser && !currentUser.isAnonymous) {
@@ -445,22 +441,15 @@
                 window.toggleDeleteCreationModal(true, id);
             };
 
-            window.initiatePublishCreation = (e, id) => {
-                e.stopPropagation();
-                window.togglePublishCreationModal(true, id);
-            };
-
             function createCardHtml(item, isMgmt) {
                 const avg = getAverageRating(item.id);
                 return `
                     <div onclick="showView('details', '${item.id}')" class="group relative cursor-pointer bg-zinc-900 rounded-2xl border ${item.visibility === 'private' ? 'border-orange-900/50' : 'border-zinc-800'} overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                         ${isMgmt ? `
                             <div class="absolute top-3 right-3 z-10 flex gap-2">
-                                ${item.visibility === 'private' ? `
-                                    <button onclick="initiatePublishCreation(event, '${item.id}')" title="Make Public" class="p-2 bg-black/60 hover:bg-orange-600 text-white rounded-full backdrop-blur-md border border-white/10 transition active:scale-95">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
-                                    </button>
-                                ` : ''}
+                                <button onclick="initiateEditCreation(event, '${item.id}')" title="Edit" class="p-2 bg-black/60 hover:bg-orange-600 text-white rounded-full backdrop-blur-md border border-white/10 transition active:scale-95">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                </button>
                                 <button onclick="initiateDeleteCreation(event, '${item.id}')" title="Delete" class="p-2 bg-black/60 hover:bg-red-600 text-white rounded-full backdrop-blur-md border border-white/10 transition active:scale-95">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>
@@ -519,22 +508,18 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="flex gap-2">
-                                    <button id="install-btn" class="mb-2 bg-orange-600 hover:bg-orange-700 text-white flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition shadow-lg active:scale-95">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                        <span>Install</span>
-                                    </button>
-                                </div>
+                                <button id="install-btn" class="mb-2 bg-orange-600 hover:bg-orange-700 text-white flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition shadow-lg active:scale-95">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                    <span>Install</span>
+                                </button>
                             </div>
                         </div>
                         <div class="p-8">
                             <div class="space-y-6 pb-8 border-b border-zinc-800">
                                 <div><h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Description</h4><p class="text-gray-300 text-lg leading-relaxed whitespace-pre-line">${item.description}</p></div>
                             </div>
-                            
                             <div class="mt-8">
                                 <h3 class="text-xl font-bold text-white mb-6">Reviews (${itemReviews.length})</h3>
-                                
                                 <div id="review-form-container" class="mb-10 bg-black/40 p-6 rounded-2xl border border-zinc-800">
                                     ${currentUser && !currentUser.isAnonymous ? `
                                         <div class="flex justify-between items-center mb-4">
@@ -549,19 +534,13 @@
                                                 <input type="radio" id="star2" name="rating" value="2" ${myExistingReview?.rating === 2 ? 'checked' : ''}/><label for="star2">★</label>
                                                 <input type="radio" id="star1" name="rating" value="1" ${myExistingReview?.rating === 1 ? 'checked' : ''}/><label for="star1">★</label>
                                             </div>
-                                            <textarea id="review-comment" placeholder="Optional: Tell others what you think..." class="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-4 text-sm text-white focus:ring-1 focus:ring-orange-500 outline-none h-24">${myExistingReview?.comment || ''}</textarea>
+                                            <textarea id="review-comment" placeholder="Tell others what you think..." class="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-4 text-sm text-white focus:ring-1 focus:ring-orange-500 outline-none h-24">${myExistingReview?.comment || ''}</textarea>
                                             <button type="submit" class="bg-zinc-100 text-black px-6 py-2 rounded-lg font-bold hover:bg-white transition text-sm active:scale-95">
                                                 ${myExistingReview ? 'Update Review' : 'Post Review'}
                                             </button>
                                         </form>
-                                    ` : `
-                                        <div class="text-center py-4">
-                                            <p class="text-zinc-500 text-sm mb-4">You must be signed in to leave a review.</p>
-                                            <button onclick="toggleAuthModal(true)" class="text-orange-500 font-bold hover:underline">Sign In Now</button>
-                                        </div>
-                                    `}
+                                    ` : `<div class="text-center py-4"><p class="text-zinc-500 text-sm mb-4">You must be signed in to leave a review.</p><button onclick="toggleAuthModal(true)" class="text-orange-500 font-bold hover:underline">Sign In Now</button></div>`}
                                 </div>
-
                                 <div class="space-y-6">
                                     ${itemReviews.map(r => `
                                         <div class="bg-zinc-900 p-6 rounded-2xl border ${r.userId === currentUser?.uid ? 'border-orange-600/50 bg-zinc-900/50' : 'border-zinc-800'}">
@@ -577,52 +556,26 @@
                                             </div>
                                             ${r.comment ? `<p class="text-gray-400 text-sm mt-3 leading-relaxed">${r.comment}</p>` : ''}
                                         </div>
-                                    `).join('') || '<p class="text-zinc-600 italic text-center py-10">No reviews yet. Be the first!</p>'}
+                                    `).join('') || '<p class="text-zinc-600 italic text-center py-10">No reviews yet.</p>'}
                                 </div>
                             </div>
                         </div>
                     </div>
                 `;
-                
                 document.getElementById('install-btn').onclick = () => showQR(item);
-
                 const deleteRevBtn = document.getElementById('delete-review-btn');
-                if (deleteRevBtn && myExistingReview) {
-                    deleteRevBtn.onclick = () => {
-                        reviewToDelete = myExistingReview;
-                        window.toggleDeleteReviewModal(true);
-                    };
-                }
-
+                if (deleteRevBtn && myExistingReview) deleteRevBtn.onclick = () => { reviewToDelete = myExistingReview; window.toggleDeleteReviewModal(true); };
                 const reviewForm = document.getElementById('review-form');
-                if (reviewForm) {
-                    reviewForm.onsubmit = async (e) => {
-                        e.preventDefault();
-                        const rating = parseInt(e.target.querySelector('input[name="rating"]:checked')?.value);
-                        const comment = document.getElementById('review-comment').value;
-                        if (!rating) return;
-                        
-                        try {
-                            if (myExistingReview) {
-                                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reviews', myExistingReview.id), {
-                                    rating: rating,
-                                    comment: comment,
-                                    updatedAt: serverTimestamp()
-                                });
-                            } else {
-                                await addDoc(reviewsCol, {
-                                    creationId: id,
-                                    userId: currentUser.uid,
-                                    userName: currentUser.displayName,
-                                    userPhoto: currentUser.photoURL,
-                                    rating: rating,
-                                    comment: comment,
-                                    createdAt: serverTimestamp()
-                                });
-                            }
-                        } catch(err) { console.error(err); }
-                    };
-                }
+                if (reviewForm) reviewForm.onsubmit = async (e) => {
+                    e.preventDefault();
+                    const rating = parseInt(e.target.querySelector('input[name="rating"]:checked')?.value);
+                    const comment = document.getElementById('review-comment').value;
+                    if (!rating) return;
+                    try {
+                        if (myExistingReview) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reviews', myExistingReview.id), { rating, comment, updatedAt: serverTimestamp() });
+                        else await addDoc(reviewsCol, { creationId: id, userId: currentUser.uid, userName: currentUser.displayName, userPhoto: currentUser.photoURL, rating, comment, createdAt: serverTimestamp() });
+                    } catch(err) { console.error(err); }
+                };
             }
 
             window.showQR = (item) => {
@@ -639,27 +592,35 @@
 
             document.getElementById('add-creation-form').onsubmit = async (e) => {
                 e.preventDefault();
-                const btn = e.target.querySelector('button[type="submit"]');
+                const btn = document.getElementById('form-submit-btn');
+                const editId = document.getElementById('form-id').value;
                 const visibility = e.target.querySelector('input[name="visibility"]:checked').value;
-                btn.disabled = true; btn.innerText = "Publishing...";
+                const data = {
+                    title: document.getElementById('form-title').value,
+                    url: document.getElementById('form-url').value,
+                    category: document.getElementById('form-category').value,
+                    description: document.getElementById('form-short-desc').value,
+                    themeColor: document.getElementById('form-theme').value,
+                    iconUrl: document.getElementById('form-icon').value,
+                    screenshotUrl: document.getElementById('form-screenshot').value,
+                    visibility,
+                    author: currentUser.displayName,
+                    userId: currentUser.uid,
+                    updatedAt: serverTimestamp()
+                };
+                
+                btn.disabled = true; btn.innerText = "Saving...";
                 try {
-                    await addDoc(creationsCol, {
-                        title: document.getElementById('form-title').value,
-                        url: document.getElementById('form-url').value,
-                        category: document.getElementById('form-category').value,
-                        description: document.getElementById('form-short-desc').value,
-                        themeColor: document.getElementById('form-theme').value,
-                        iconUrl: document.getElementById('form-icon').value,
-                        screenshotUrl: document.getElementById('form-screenshot').value,
-                        visibility,
-                        author: currentUser.displayName,
-                        userId: currentUser.uid,
-                        createdAt: serverTimestamp()
-                    });
+                    if (editId) {
+                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'creations', editId), data);
+                    } else {
+                        data.createdAt = serverTimestamp();
+                        await addDoc(creationsCol, data);
+                    }
                     e.target.reset();
                     showView(visibility === 'private' ? 'my-creations' : 'home');
                 } catch (err) { console.error(err); } 
-                finally { btn.disabled = false; btn.innerText = "Publish Creation"; }
+                finally { btn.disabled = false; btn.innerText = editId ? "Update Creation" : "Publish Creation"; }
             };
         }
 
