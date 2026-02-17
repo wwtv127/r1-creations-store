@@ -82,7 +82,7 @@
             <div class="mb-8 flex items-center justify-between">
                 <div>
                     <h2 class="text-2xl font-bold text-white">My Creations</h2>
-                    <p class="text-gray-400">Manage your Creations</p>
+                    <p class="text-gray-400">Manage the creations you have published.</p>
                 </div>
                 <button onclick="showView('home')" class="text-sm font-medium text-gray-400 hover:text-white transition">Back to Store</button>
             </div>
@@ -267,12 +267,8 @@
     <!-- Firebase Scripts -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, deleteDoc, doc, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore as getFS, collection as col, addDoc as add, onSnapshot as snap, query as q, serverTimestamp as ts, deleteDoc as del, doc as d, updateDoc as upd } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Re-aliasing for internal logic use
-        const initializeFirestore = getFS;
+        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const raw_secret = `REPLACE_WITH_FIREBASE_CONFIG`;
         
@@ -287,7 +283,7 @@
 
                 const firebaseConfig = JSON.parse(formattedStr);
                 const app = initializeApp(firebaseConfig);
-                const db = initializeFirestore(app);
+                const db = getFirestore(app);
                 const auth = getAuth(app);
                 
                 initLogic(db, auth);
@@ -305,8 +301,8 @@
             let creationToDeleteId = null;
             let creationToPublishId = null;
 
-            const creationsCol = col(db, 'artifacts', appId, 'public', 'data', 'creations');
-            const reviewsCol = col(db, 'artifacts', appId, 'public', 'data', 'reviews');
+            const creationsCol = collection(db, 'artifacts', appId, 'public', 'data', 'creations');
+            const reviewsCol = collection(db, 'artifacts', appId, 'public', 'data', 'reviews');
             const provider = new GoogleAuthProvider();
 
             onAuthStateChanged(auth, (user) => {
@@ -331,12 +327,12 @@
                 renderCreations();
             });
 
-            snap(creationsCol, (snap) => {
+            onSnapshot(creationsCol, (snap) => {
                 creations = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderCreations();
             });
 
-            snap(reviewsCol, (snap) => {
+            onSnapshot(reviewsCol, (snap) => {
                 reviews = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 const detailsView = document.getElementById('view-details');
                 if (!detailsView.classList.contains('hidden')) {
@@ -369,7 +365,7 @@
             document.getElementById('confirm-delete-review-btn').onclick = async () => {
                 if (reviewToDelete) {
                     try {
-                        await del(d(db, 'artifacts', appId, 'public', 'data', 'reviews', reviewToDelete.id));
+                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reviews', reviewToDelete.id));
                         window.toggleDeleteReviewModal(false);
                     } catch(err) { console.error(err); }
                 }
@@ -378,7 +374,7 @@
             document.getElementById('confirm-delete-creation-btn').onclick = async () => {
                 if (creationToDeleteId) {
                     try {
-                        await del(d(db, 'artifacts', appId, 'public', 'data', 'creations', creationToDeleteId));
+                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'creations', creationToDeleteId));
                         window.toggleDeleteCreationModal(false);
                         window.showView('home');
                     } catch(err) { console.error(err); }
@@ -388,7 +384,7 @@
             document.getElementById('confirm-publish-creation-btn').onclick = async () => {
                 if (creationToPublishId) {
                     try {
-                        await upd(d(db, 'artifacts', appId, 'public', 'data', 'creations', creationToPublishId), {
+                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'creations', creationToPublishId), {
                             visibility: 'public'
                         });
                         window.togglePublishCreationModal(false);
@@ -596,20 +592,20 @@
                         
                         try {
                             if (myExistingReview) {
-                                await upd(d(db, 'artifacts', appId, 'public', 'data', 'reviews', myExistingReview.id), {
+                                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reviews', myExistingReview.id), {
                                     rating: rating,
                                     comment: comment,
-                                    updatedAt: ts()
+                                    updatedAt: serverTimestamp()
                                 });
                             } else {
-                                await add(reviewsCol, {
+                                await addDoc(reviewsCol, {
                                     creationId: id,
                                     userId: currentUser.uid,
                                     userName: currentUser.displayName,
                                     userPhoto: currentUser.photoURL,
                                     rating: rating,
                                     comment: comment,
-                                    createdAt: ts()
+                                    createdAt: serverTimestamp()
                                 });
                             }
                         } catch(err) { console.error(err); }
@@ -635,7 +631,7 @@
                 const visibility = e.target.querySelector('input[name="visibility"]:checked').value;
                 btn.disabled = true; btn.innerText = "Publishing...";
                 try {
-                    await add(creationsCol, {
+                    await addDoc(creationsCol, {
                         title: document.getElementById('form-title').value,
                         url: document.getElementById('form-url').value,
                         category: document.getElementById('form-category').value,
@@ -646,7 +642,7 @@
                         visibility,
                         author: currentUser.displayName,
                         userId: currentUser.uid,
-                        createdAt: ts()
+                        createdAt: serverTimestamp()
                     });
                     e.target.reset();
                     showView(visibility === 'private' ? 'my-creations' : 'home');
