@@ -14,6 +14,10 @@
         .category-pill.active { background-color: #fe5000; color: white; border-color: #fe5000; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .star-rating { direction: rtl; display: inline-flex; }
+        .star-rating input { display: none; }
+        .star-rating label { color: #333; cursor: pointer; font-size: 2rem; transition: color 0.2s; }
+        .star-rating label:hover, .star-rating label:hover ~ label, .star-rating input:checked ~ label { color: #fe5000; }
     </style>
 </head>
 <body class="text-gray-100">
@@ -34,13 +38,11 @@
                     + Add Creation
                 </button>
                 
-                <!-- User Profile Dropdown Trigger -->
                 <div id="user-profile" class="hidden relative ml-2">
                     <button onclick="toggleProfileDropdown()" class="focus:outline-none">
                         <img id="user-avatar" src="" class="w-8 h-8 rounded-full border border-gray-700 hover:border-orange-500 transition">
                     </button>
                     
-                    <!-- Profile Overlay/Dropdown -->
                     <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl py-2 z-50">
                         <div class="px-4 py-3 border-b border-zinc-800 flex flex-col items-center text-center">
                             <img id="dropdown-avatar" src="" class="w-12 h-12 rounded-full mb-2 border border-zinc-700">
@@ -84,9 +86,7 @@
                 </div>
                 <button onclick="showView('home')" class="text-sm font-medium text-gray-400 hover:text-white transition">Back to Store</button>
             </div>
-            <div id="my-creations-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- User items injected here -->
-            </div>
+            <div id="my-creations-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         </div>
 
         <!-- Add Creation View -->
@@ -133,7 +133,6 @@
                             <span class="text-sm font-medium text-gray-300">Private</span>
                         </label>
                     </div>
-                    <p class="text-[10px] text-zinc-500 mt-1 uppercase tracking-wider">Private creations are only visible to you in "My Creations"</p>
                 </div>
 
                 <div>
@@ -153,7 +152,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-1">Author</label>
-                    <input type="text" id="form-author" readonly class="w-full bg-zinc-800 px-4 py-2 rounded-lg border border-zinc-700 text-gray-400 cursor-not-allowed outline-none" placeholder="Sign in to set author">
+                    <input type="text" id="form-author" readonly class="w-full bg-zinc-800 px-4 py-2 rounded-lg border border-zinc-700 text-gray-400 cursor-not-allowed outline-none">
                 </div>
 
                 <div class="flex gap-4 pt-4">
@@ -202,7 +201,7 @@
     <div id="signout-modal" class="fixed inset-0 z-[110] hidden flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
         <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center">
             <h3 class="text-xl font-bold mb-4 text-white">Sign Out?</h3>
-            <p class="text-zinc-400 text-sm mb-8">Are you sure you want to sign out of RabbitCreations?</p>
+            <p class="text-zinc-400 text-sm mb-8">Are you sure you want to sign out?</p>
             <div class="flex gap-3">
                 <button onclick="triggerLogout()" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition">Sign Out</button>
                 <button onclick="toggleSignOutModal(false)" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 rounded-xl transition">Cancel</button>
@@ -214,7 +213,7 @@
     <div id="qr-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
         <div class="bg-zinc-900 rounded-3xl p-8 max-sm:w-full max-w-sm text-center shadow-2xl border border-zinc-800">
             <h3 class="text-xl font-bold mb-2 text-white">Install Creation</h3>
-            <p class="text-gray-400 text-sm mb-6">Scan this QR code with your rabbit r1 to get the creation installed on the r1.</p>
+            <p class="text-gray-400 text-sm mb-6">Scan this QR code with your rabbit r1.</p>
             <div id="qrcode-container" class="flex justify-center mb-6 p-4 bg-white rounded-2xl"></div>
             <button onclick="closeQR()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl font-bold transition">Close</button>
         </div>
@@ -223,7 +222,7 @@
     <!-- Firebase Scripts -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, deleteDoc, doc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         const raw_secret = `REPLACE_WITH_FIREBASE_CONFIG`;
@@ -232,13 +231,10 @@
             try {
                 const startIdx = raw_secret.indexOf('{');
                 const endIdx = raw_secret.lastIndexOf('}');
-                if (startIdx === -1 || endIdx === -1) throw new Error("Invalid Config Format");
+                if (startIdx === -1 || endIdx === -1) throw new Error("Invalid Config");
 
                 let jsonStr = raw_secret.substring(startIdx, endIdx + 1);
-                const formattedStr = jsonStr
-                    .replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":') 
-                    .replace(/:\s*'([^']*)'/g, ': "$1"') 
-                    .replace(/,\s*([\]}])/g, '$1'); 
+                const formattedStr = jsonStr.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":').replace(/:\s*'([^']*)'/g, ': "$1"').replace(/,\s*([\]}])/g, '$1'); 
 
                 const firebaseConfig = JSON.parse(formattedStr);
                 const app = initializeApp(firebaseConfig);
@@ -246,217 +242,155 @@
                 const auth = getAuth(app);
                 
                 initLogic(db, auth);
-
-            } catch (err) {
-                console.error("Initialization failed:", err);
-            }
+            } catch (err) { console.error(err); }
         }
 
         function initLogic(db, auth) {
             const appId = 'creations-store-v1';
             let creations = [];
+            let reviews = [];
             let selectedCategory = 'All';
             let currentUser = null;
-            let intentToAdd = false; // Track if user wanted to add creation before login
+            let intentToAdd = false;
 
             const creationsCol = collection(db, 'artifacts', appId, 'public', 'data', 'creations');
+            const reviewsCol = collection(db, 'artifacts', appId, 'public', 'data', 'reviews');
             const provider = new GoogleAuthProvider();
 
-            // Auth State Listener
             onAuthStateChanged(auth, (user) => {
                 currentUser = user;
-                const navMy = document.getElementById('nav-my-creations');
-                const navLogin = document.getElementById('nav-login');
-                const profile = document.getElementById('user-profile');
-                const avatar = document.getElementById('user-avatar');
-                const ddAvatar = document.getElementById('dropdown-avatar');
-                const ddName = document.getElementById('dropdown-name');
-                const authorInput = document.getElementById('form-author');
-
                 if (user && !user.isAnonymous) {
-                    navMy.classList.remove('hidden');
-                    navLogin.classList.add('hidden');
-                    profile.classList.remove('hidden');
-                    avatar.src = user.photoURL;
-                    ddAvatar.src = user.photoURL;
-                    ddName.innerText = user.displayName;
-                    authorInput.value = user.displayName;
-                    
+                    document.getElementById('nav-my-creations').classList.remove('hidden');
+                    document.getElementById('nav-login').classList.add('hidden');
+                    document.getElementById('user-profile').classList.remove('hidden');
+                    document.getElementById('user-avatar').src = user.photoURL;
+                    document.getElementById('dropdown-avatar').src = user.photoURL;
+                    document.getElementById('dropdown-name').innerText = user.displayName;
+                    document.getElementById('form-author').value = user.displayName;
                     window.toggleAuthModal(false);
-                    
-                    // FIXED: Check intent here. Intent is set when they click +Add Creation while logged out.
                     if (intentToAdd) {
-                        // Small timeout ensures the UI state for login is fully cleared before view switch
-                        setTimeout(() => {
-                            window.showView('add');
-                            intentToAdd = false;
-                        }, 50);
+                        setTimeout(() => { window.showView('add'); intentToAdd = false; }, 50);
                     }
                 } else {
-                    navMy.classList.add('hidden');
-                    navLogin.classList.remove('hidden');
-                    profile.classList.add('hidden');
-                    authorInput.value = "";
+                    document.getElementById('nav-my-creations').classList.add('hidden');
+                    document.getElementById('nav-login').classList.remove('hidden');
+                    document.getElementById('user-profile').classList.add('hidden');
                 }
                 renderCreations();
             });
 
-            window.toggleAuthModal = (show) => {
-                const modal = document.getElementById('auth-modal');
-                modal.classList.toggle('hidden', !show);
-                // We DON'T reset intentToAdd to false here because triggerGoogleLogin is called while modal is open.
-            };
-
-            window.toggleSignOutModal = (show) => {
-                const modal = document.getElementById('signout-modal');
-                modal.classList.toggle('hidden', !show);
-            };
-
-            window.confirmSignOut = () => {
-                window.toggleProfileDropdown(); // Close menu
-                window.toggleSignOutModal(true);
-            };
-
-            window.toggleProfileDropdown = () => {
-                const dd = document.getElementById('profile-dropdown');
-                dd.classList.toggle('hidden');
-            };
-
-            // Close dropdown when clicking outside
-            window.onclick = function(event) {
-                if (!event.target.closest('#user-profile')) {
-                    const dd = document.getElementById('profile-dropdown');
-                    if (dd) dd.classList.add('hidden');
-                }
-            };
-
-            window.triggerGoogleLogin = async () => {
-                try {
-                    await signInWithPopup(auth, provider);
-                } catch (err) {
-                    console.error("Login failed", err);
-                }
-            };
-
-            window.triggerLogout = async () => {
-                try {
-                    await signOut(auth);
-                    window.toggleSignOutModal(false);
-                    window.showView('home');
-                } catch (err) {
-                    console.error("Logout failed", err);
-                }
-            };
-
-            window.handleCreationAuth = () => {
-                if (!currentUser || currentUser.isAnonymous) {
-                    intentToAdd = true;
-                    window.toggleAuthModal(true);
-                } else {
-                    window.showView('add');
-                }
-            };
-
-            onSnapshot(creationsCol, (snapshot) => {
-                creations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            onSnapshot(creationsCol, (snap) => {
+                creations = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderCreations();
             });
 
-            window.showView = (viewName, itemId = null) => {
+            onSnapshot(reviewsCol, (snap) => {
+                reviews = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // Update detail view if open
+                const detailsView = document.getElementById('view-details');
+                if (!detailsView.classList.contains('hidden')) {
+                    const activeId = detailsView.getAttribute('data-active-id');
+                    if (activeId) renderDetails(activeId);
+                }
+            });
+
+            window.toggleAuthModal = (s) => document.getElementById('auth-modal').classList.toggle('hidden', !s);
+            window.toggleSignOutModal = (s) => document.getElementById('signout-modal').classList.toggle('hidden', !s);
+            window.confirmSignOut = () => { window.toggleProfileDropdown(); window.toggleSignOutModal(true); };
+            window.toggleProfileDropdown = () => document.getElementById('profile-dropdown').classList.toggle('hidden');
+            window.triggerGoogleLogin = () => signInWithPopup(auth, provider);
+            window.triggerLogout = () => { signOut(auth); window.toggleSignOutModal(false); window.showView('home'); };
+            window.handleCreationAuth = () => { if (!currentUser || currentUser.isAnonymous) { intentToAdd = true; window.toggleAuthModal(true); } else { window.showView('add'); } };
+
+            window.showView = (v, itemId = null) => {
                 document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
-                const targetView = document.getElementById(`view-${viewName}`);
-                if (targetView) targetView.classList.remove('hidden');
-                
+                const target = document.getElementById(`view-${v}`);
+                if (target) {
+                    target.classList.remove('hidden');
+                    if (v === 'details') target.setAttribute('data-active-id', itemId);
+                }
                 window.scrollTo(0, 0);
-                if (viewName === 'details' && itemId) renderDetails(itemId);
+                if (v === 'details' && itemId) renderDetails(itemId);
                 renderCreations(); 
             };
+
+            function getAverageRating(id) {
+                const itemReviews = reviews.filter(r => r.creationId === id);
+                if (itemReviews.length === 0) return 0;
+                const sum = itemReviews.reduce((acc, r) => acc + r.rating, 0);
+                return (sum / itemReviews.length).toFixed(1);
+            }
 
             function renderCreations() {
                 const grid = document.getElementById('creations-grid');
                 const myGrid = document.getElementById('my-creations-grid');
-                
                 if (!grid || !myGrid) return;
 
-                // Home Grid: Show only PUBLIC items
-                let homeFiltered = creations.filter(c => c.visibility !== 'private');
-                if (selectedCategory !== 'All') {
-                    homeFiltered = homeFiltered.filter(c => c.category === selectedCategory);
-                }
+                let filtered = creations.filter(c => c.visibility !== 'private');
+                if (selectedCategory !== 'All') filtered = filtered.filter(c => c.category === selectedCategory);
+                
+                grid.innerHTML = filtered.map(c => createCardHtml(c, false)).join('') || `<div class="col-span-full py-20 text-center text-gray-500 uppercase tracking-widest text-xs">No creations</div>`;
 
-                grid.innerHTML = homeFiltered.map(item => createCardHtml(item, false)).join('') || 
-                    `<div class="col-span-full py-20 text-center text-gray-500 uppercase tracking-widest text-xs">No creations found</div>`;
-
-                // My Creations Grid: Show EVERYTHING owned by the user (public or private)
                 if (currentUser && !currentUser.isAnonymous) {
                     const mine = creations.filter(c => c.userId === currentUser.uid);
-                    myGrid.innerHTML = mine.map(item => createCardHtml(item, true)).join('') || 
-                        `<div class="col-span-full py-20 text-center text-gray-500 uppercase tracking-widest text-xs">You haven't published any creations yet</div>`;
+                    myGrid.innerHTML = mine.map(c => createCardHtml(c, true)).join('') || `<div class="col-span-full py-20 text-center text-gray-500 uppercase tracking-widest text-xs">Empty</div>`;
                 }
             }
 
-            function createCardHtml(item, isManagement) {
-                const isPrivate = item.visibility === 'private';
+            function createCardHtml(item, isMgmt) {
+                const avg = getAverageRating(item.id);
                 return `
-                    <div onclick="showView('details', '${item.id}')" class="group cursor-pointer bg-zinc-900 rounded-2xl border ${isPrivate ? 'border-orange-900/50' : 'border-zinc-800'} overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                    <div onclick="showView('details', '${item.id}')" class="group cursor-pointer bg-zinc-900 rounded-2xl border ${item.visibility === 'private' ? 'border-orange-900/50' : 'border-zinc-800'} overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                         <div class="h-48 overflow-hidden bg-zinc-800 relative">
                             ${item.screenshotUrl 
-                                ? `<img src="${item.screenshotUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://via.placeholder.com/400x200?text=No+Preview'">`
+                                ? `<img src="${item.screenshotUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.outerHTML='<div class=\\'w-full h-full flex items-center justify-center text-white font-bold text-4xl\\' style=\\'background: ${item.themeColor || '#fe5000'}\\'>${item.title.charAt(0)}</div>'">`
                                 : `<div class="w-full h-full flex items-center justify-center text-white font-bold text-4xl" style="background: ${item.themeColor || '#fe5000'}">${item.title.charAt(0)}</div>`
                             }
                             <div class="absolute top-3 left-3 flex gap-2">
                                 <div class="px-3 py-1 bg-black/80 backdrop-blur rounded-full text-xs font-bold text-white border border-zinc-700 shadow-sm">${item.category}</div>
-                                ${isPrivate ? `<div class="px-3 py-1 bg-orange-600/90 backdrop-blur rounded-full text-[10px] font-black text-white uppercase tracking-tighter shadow-sm">Private</div>` : ''}
+                                ${item.visibility === 'private' ? `<div class="px-3 py-1 bg-orange-600/90 backdrop-blur rounded-full text-[10px] font-black text-white uppercase tracking-tighter shadow-sm">Private</div>` : ''}
                             </div>
-                            ${isManagement ? `
-                                <button onclick="event.stopPropagation(); deleteCreation('${item.id}')" class="absolute top-3 right-3 p-2 bg-red-600/80 hover:bg-red-600 rounded-full text-white transition">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                                </button>
-                            ` : ''}
+                            <div class="absolute bottom-3 right-3 px-2 py-1 bg-black/60 rounded-lg backdrop-blur text-xs font-bold flex items-center gap-1">
+                                <span class="text-orange-500">★</span> ${avg > 0 ? avg : 'New'}
+                            </div>
                         </div>
                         <div class="p-5">
                             <div class="flex items-center gap-3 mb-2">
-                                ${item.iconUrl ? `<img src="${item.iconUrl}" class="w-8 h-8 rounded-lg shadow-sm">` : `<div class="w-8 h-8 rounded-lg" style="background:${item.themeColor}"></div>`}
+                                ${item.iconUrl ? `<img src="${item.iconUrl}" class="w-8 h-8 rounded-lg">` : `<div class="w-8 h-8 rounded-lg" style="background:${item.themeColor}"></div>`}
                                 <h3 class="font-bold text-lg leading-tight text-white">${item.title}</h3>
                             </div>
                             <p class="text-gray-400 text-sm line-clamp-2">${item.description}</p>
-                            <p class="text-[10px] text-zinc-600 mt-2 uppercase tracking-widest font-bold">By ${item.author || 'Anonymous'}</p>
                         </div>
                     </div>
                 `;
             }
 
-            window.deleteCreation = async (id) => {
-                if(confirm("Are you sure you want to delete this creation?")) {
-                    try {
-                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'creations', id));
-                    } catch(e) { console.error("Delete failed", e); }
-                }
-            };
-
-            window.filterCategory = (cat) => {
-                selectedCategory = cat;
-                document.querySelectorAll('.category-pill').forEach(btn => btn.classList.toggle('active', btn.innerText === cat));
-                renderCreations();
-            };
-
             function renderDetails(id) {
                 const item = creations.find(c => c.id === id);
                 if (!item) return;
+                const avg = getAverageRating(id);
+                const itemReviews = reviews.filter(r => r.creationId === id).sort((a,b) => b.createdAt?.seconds - a.createdAt?.seconds);
+
                 const container = document.getElementById('details-content');
                 container.innerHTML = `
-                    <div class="bg-zinc-900 rounded-3xl overflow-hidden shadow-xl border border-zinc-800">
+                    <div class="bg-zinc-900 rounded-3xl overflow-hidden shadow-xl border border-zinc-800 mb-8">
                         <div class="relative h-64 sm:h-96 bg-zinc-800">
-                            <img src="${item.screenshotUrl || 'https://via.placeholder.com/1200x600?text=No+Image'}" class="w-full h-full object-cover">
+                            ${item.screenshotUrl 
+                                ? `<img src="${item.screenshotUrl}" class="w-full h-full object-cover" onerror="this.outerHTML='<div class=\\'w-full h-full flex items-center justify-center text-white font-bold text-4xl\\' style=\\'background: ${item.themeColor || '#fe5000'}\\'>${item.title.charAt(0)}</div>'">`
+                                : `<div class="w-full h-full flex items-center justify-center text-white font-bold text-4xl" style="background: ${item.themeColor || '#fe5000'}">${item.title.charAt(0)}</div>`
+                            }
                             <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
-                            <div class="absolute bottom-6 left-6 right-6 flex items-end justify-between text-white">
-                                <div class="flex items-end gap-6">
+                            <div class="absolute bottom-6 left-6 right-6 flex items-end justify-between">
+                                <div class="flex items-end gap-6 text-white">
                                     <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl shadow-2xl p-1 bg-zinc-900 border border-zinc-800 shrink-0">
                                         ${item.iconUrl ? `<img src="${item.iconUrl}" class="w-full h-full rounded-xl object-cover">` : `<div class="w-full h-full rounded-xl flex items-center justify-center text-4xl font-black" style="background:${item.themeColor}">${item.title[0]}</div>`}
                                     </div>
                                     <div class="pb-2">
-                                        <h2 class="text-3xl font-black leading-tight">${item.title} ${item.visibility === 'private' ? '<span class="text-xs bg-orange-600 px-2 py-0.5 rounded-md ml-2 align-middle">PRIVATE</span>' : ''}</h2>
-                                        <p class="text-gray-300 font-medium">${item.category} • By ${item.author || 'Anonymous'}</p>
+                                        <h2 class="text-3xl font-black leading-tight">${item.title}</h2>
+                                        <div class="flex items-center gap-2 text-gray-300 font-medium">
+                                            <span>${item.category} • By ${item.author || 'Anonymous'}</span>
+                                            <span class="text-orange-500 ml-2">★</span> ${avg > 0 ? avg : 'No ratings'}
+                                        </div>
                                     </div>
                                 </div>
                                 <button id="install-btn" class="mb-2 bg-orange-600 hover:bg-orange-700 text-white flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition shadow-lg active:scale-95">
@@ -465,33 +399,100 @@
                                 </button>
                             </div>
                         </div>
-                        <div class="p-6 sm:p-10">
-                            <div class="space-y-6">
-                                <div><h4 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Description</h4><p class="text-gray-300 text-lg leading-relaxed whitespace-pre-line">${item.description}</p></div>
-                                <div><h4 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Website</h4><a href="${item.url}" target="_blank" class="text-orange-500 font-semibold hover:underline flex items-center">${item.url} <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></a></div>
+                        <div class="p-8">
+                            <div class="space-y-6 pb-8 border-b border-zinc-800">
+                                <div><h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Description</h4><p class="text-gray-300 text-lg leading-relaxed whitespace-pre-line">${item.description}</p></div>
+                                <div><h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Website</h4><a href="${item.url}" target="_blank" class="text-orange-500 font-semibold hover:underline flex items-center">${item.url} <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></a></div>
+                            </div>
+                            
+                            <div class="mt-8">
+                                <h3 class="text-xl font-bold text-white mb-6">Reviews (${itemReviews.length})</h3>
+                                
+                                <div id="review-form-container" class="mb-10 bg-black/40 p-6 rounded-2xl border border-zinc-800">
+                                    ${currentUser && !currentUser.isAnonymous ? `
+                                        <h4 class="font-bold text-white mb-4">Leave a review</h4>
+                                        <form id="review-form" class="space-y-4">
+                                            <div class="star-rating">
+                                                <input type="radio" id="star5" name="rating" value="5" required/><label for="star5">★</label>
+                                                <input type="radio" id="star4" name="rating" value="4"/><label for="star4">★</label>
+                                                <input type="radio" id="star3" name="rating" value="3"/><label for="star3">★</label>
+                                                <input type="radio" id="star2" name="rating" value="2"/><label for="star2">★</label>
+                                                <input type="radio" id="star1" name="rating" value="1"/><label for="star1">★</label>
+                                            </div>
+                                            <textarea id="review-comment" placeholder="Optional: Tell others what you think..." class="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-4 text-sm text-white focus:ring-1 focus:ring-orange-500 outline-none h-24"></textarea>
+                                            <button type="submit" class="bg-zinc-100 text-black px-6 py-2 rounded-lg font-bold hover:bg-white transition text-sm">Post Review</button>
+                                        </form>
+                                    ` : `
+                                        <div class="text-center py-4">
+                                            <p class="text-zinc-500 text-sm mb-4">You must be signed in to leave a review.</p>
+                                            <button onclick="toggleAuthModal(true)" class="text-orange-500 font-bold hover:underline">Sign In Now</button>
+                                        </div>
+                                    `}
+                                </div>
+
+                                <div class="space-y-6">
+                                    ${itemReviews.map(r => `
+                                        <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800">
+                                            <div class="flex justify-between items-start mb-2">
+                                                <div class="flex items-center gap-3">
+                                                    <img src="${r.userPhoto || ''}" class="w-8 h-8 rounded-full bg-zinc-800" onerror="this.src='https://ui-avatars.com/api/?name=${r.userName}'">
+                                                    <div>
+                                                        <p class="text-sm font-bold text-white">${r.userName}</p>
+                                                        <p class="text-[10px] text-zinc-500 uppercase tracking-widest">${r.createdAt ? new Date(r.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}</p>
+                                                    </div>
+                                                </div>
+                                                <div class="text-orange-500 font-bold">${'★'.repeat(r.rating)}<span class="text-zinc-700">${'★'.repeat(5-r.rating)}</span></div>
+                                            </div>
+                                            ${r.comment ? `<p class="text-gray-400 text-sm mt-3 leading-relaxed">${r.comment}</p>` : ''}
+                                        </div>
+                                    `).join('') || '<p class="text-zinc-600 italic text-center py-10">No reviews yet. Be the first!</p>'}
+                                </div>
                             </div>
                         </div>
                     </div>
                 `;
+                
                 document.getElementById('install-btn').onclick = () => showQR(item);
+                const reviewForm = document.getElementById('review-form');
+                if (reviewForm) {
+                    reviewForm.onsubmit = async (e) => {
+                        e.preventDefault();
+                        const rating = parseInt(e.target.querySelector('input[name="rating"]:checked')?.value);
+                        const comment = document.getElementById('review-comment').value;
+                        if (!rating) return;
+                        
+                        try {
+                            await addDoc(reviewsCol, {
+                                creationId: id,
+                                userId: currentUser.uid,
+                                userName: currentUser.displayName,
+                                userPhoto: currentUser.photoURL,
+                                rating: rating,
+                                comment: comment,
+                                createdAt: serverTimestamp()
+                            });
+                            renderDetails(id);
+                        } catch(err) { console.error(err); }
+                    };
+                }
             }
 
             window.showQR = (item) => {
                 const modal = document.getElementById('qr-modal');
                 const container = document.getElementById('qrcode-container');
                 container.innerHTML = "";
-                const exportData = { title: item.title, url: item.url, description: item.description, iconUrl: item.iconUrl || "", themeColor: item.themeColor || "#000000", author: item.author || "", screenshotUrl: item.screenshotUrl || "", category: item.category };
-                new QRCode(container, { text: JSON.stringify(exportData), width: 256, height: 256, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+                const data = { title: item.title, url: item.url, description: item.description, iconUrl: item.iconUrl || "", themeColor: item.themeColor || "#fe5000", author: item.author || "", screenshotUrl: item.screenshotUrl || "", category: item.category };
+                new QRCode(container, { text: JSON.stringify(data), width: 256, height: 256 });
                 modal.classList.remove('hidden');
             };
 
             window.closeQR = () => document.getElementById('qr-modal').classList.add('hidden');
+            window.filterCategory = (cat) => { selectedCategory = cat; document.querySelectorAll('.category-pill').forEach(btn => btn.classList.toggle('active', btn.innerText === cat)); renderCreations(); };
 
             document.getElementById('add-creation-form').onsubmit = async (e) => {
                 e.preventDefault();
                 const btn = e.target.querySelector('button[type="submit"]');
                 const visibility = e.target.querySelector('input[name="visibility"]:checked').value;
-                
                 btn.disabled = true; btn.innerText = "Publishing...";
                 try {
                     await addDoc(creationsCol, {
@@ -502,17 +503,13 @@
                         themeColor: document.getElementById('form-theme').value,
                         iconUrl: document.getElementById('form-icon').value,
                         screenshotUrl: document.getElementById('form-screenshot').value,
-                        visibility: visibility,
+                        visibility,
                         author: currentUser.displayName,
                         userId: currentUser.uid,
                         createdAt: serverTimestamp()
                     });
-                    e.target.reset(); 
-                    if (visibility === 'private') {
-                        showView('my-creations');
-                    } else {
-                        showView('home');
-                    }
+                    e.target.reset();
+                    showView(visibility === 'private' ? 'my-creations' : 'home');
                 } catch (err) { console.error(err); } 
                 finally { btn.disabled = false; btn.innerText = "Publish Creation"; }
             };
