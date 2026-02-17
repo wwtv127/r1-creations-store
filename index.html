@@ -381,8 +381,9 @@
                     homeFiltered = homeFiltered.filter(c => c.category === selectedCategory);
                 }
 
+                // CHANGED: text back to "No creations found"
                 grid.innerHTML = homeFiltered.map(item => createCardHtml(item, false)).join('') || 
-                    `<div class="col-span-full py-20 text-center text-gray-500 uppercase tracking-widest text-xs">No public creations found</div>`;
+                    `<div class="col-span-full py-20 text-center text-gray-500 uppercase tracking-widest text-xs">No creations found</div>`;
 
                 // My Creations Grid: Show EVERYTHING owned by the user (public or private)
                 if (currentUser && !currentUser.isAnonymous) {
