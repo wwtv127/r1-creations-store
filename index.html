@@ -222,7 +222,7 @@
     <!-- Firebase Scripts -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, deleteDoc, doc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, deleteDoc, doc, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         const raw_secret = `REPLACE_WITH_FIREBASE_CONFIG`;
@@ -286,7 +286,6 @@
 
             onSnapshot(reviewsCol, (snap) => {
                 reviews = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                // Update detail view if open
                 const detailsView = document.getElementById('view-details');
                 if (!detailsView.classList.contains('hidden')) {
                     const activeId = detailsView.getAttribute('data-active-id');
@@ -370,6 +369,7 @@
                 if (!item) return;
                 const avg = getAverageRating(id);
                 const itemReviews = reviews.filter(r => r.creationId === id).sort((a,b) => b.createdAt?.seconds - a.createdAt?.seconds);
+                const myExistingReview = (currentUser && !currentUser.isAnonymous) ? reviews.find(r => r.creationId === id && r.userId === currentUser.uid) : null;
 
                 const container = document.getElementById('details-content');
                 container.innerHTML = `
@@ -410,17 +410,22 @@
                                 
                                 <div id="review-form-container" class="mb-10 bg-black/40 p-6 rounded-2xl border border-zinc-800">
                                     ${currentUser && !currentUser.isAnonymous ? `
-                                        <h4 class="font-bold text-white mb-4">Leave a review</h4>
+                                        <div class="flex justify-between items-center mb-4">
+                                            <h4 class="font-bold text-white">${myExistingReview ? 'Edit your review' : 'Leave a review'}</h4>
+                                            ${myExistingReview ? `<button id="delete-review-btn" class="text-xs font-bold text-red-500 hover:text-red-400 transition uppercase tracking-widest">Delete My Review</button>` : ''}
+                                        </div>
                                         <form id="review-form" class="space-y-4">
                                             <div class="star-rating">
-                                                <input type="radio" id="star5" name="rating" value="5" required/><label for="star5">★</label>
-                                                <input type="radio" id="star4" name="rating" value="4"/><label for="star4">★</label>
-                                                <input type="radio" id="star3" name="rating" value="3"/><label for="star3">★</label>
-                                                <input type="radio" id="star2" name="rating" value="2"/><label for="star2">★</label>
-                                                <input type="radio" id="star1" name="rating" value="1"/><label for="star1">★</label>
+                                                <input type="radio" id="star5" name="rating" value="5" required ${myExistingReview?.rating === 5 ? 'checked' : ''}/><label for="star5">★</label>
+                                                <input type="radio" id="star4" name="rating" value="4" ${myExistingReview?.rating === 4 ? 'checked' : ''}/><label for="star4">★</label>
+                                                <input type="radio" id="star3" name="rating" value="3" ${myExistingReview?.rating === 3 ? 'checked' : ''}/><label for="star3">★</label>
+                                                <input type="radio" id="star2" name="rating" value="2" ${myExistingReview?.rating === 2 ? 'checked' : ''}/><label for="star2">★</label>
+                                                <input type="radio" id="star1" name="rating" value="1" ${myExistingReview?.rating === 1 ? 'checked' : ''}/><label for="star1">★</label>
                                             </div>
-                                            <textarea id="review-comment" placeholder="Optional: Tell others what you think..." class="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-4 text-sm text-white focus:ring-1 focus:ring-orange-500 outline-none h-24"></textarea>
-                                            <button type="submit" class="bg-zinc-100 text-black px-6 py-2 rounded-lg font-bold hover:bg-white transition text-sm">Post Review</button>
+                                            <textarea id="review-comment" placeholder="Optional: Tell others what you think..." class="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-4 text-sm text-white focus:ring-1 focus:ring-orange-500 outline-none h-24">${myExistingReview?.comment || ''}</textarea>
+                                            <button type="submit" class="bg-zinc-100 text-black px-6 py-2 rounded-lg font-bold hover:bg-white transition text-sm">
+                                                ${myExistingReview ? 'Update Review' : 'Post Review'}
+                                            </button>
                                         </form>
                                     ` : `
                                         <div class="text-center py-4">
@@ -432,12 +437,12 @@
 
                                 <div class="space-y-6">
                                     ${itemReviews.map(r => `
-                                        <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800">
+                                        <div class="bg-zinc-900 p-6 rounded-2xl border ${r.userId === currentUser?.uid ? 'border-orange-600/50 bg-zinc-900/50' : 'border-zinc-800'}">
                                             <div class="flex justify-between items-start mb-2">
                                                 <div class="flex items-center gap-3">
                                                     <img src="${r.userPhoto || ''}" class="w-8 h-8 rounded-full bg-zinc-800" onerror="this.src='https://ui-avatars.com/api/?name=${r.userName}'">
                                                     <div>
-                                                        <p class="text-sm font-bold text-white">${r.userName}</p>
+                                                        <p class="text-sm font-bold text-white">${r.userName} ${r.userId === currentUser?.uid ? '<span class="ml-1 text-[10px] text-orange-500 font-black uppercase tracking-tighter">Your Review</span>' : ''}</p>
                                                         <p class="text-[10px] text-zinc-500 uppercase tracking-widest">${r.createdAt ? new Date(r.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}</p>
                                                     </div>
                                                 </div>
@@ -453,6 +458,17 @@
                 `;
                 
                 document.getElementById('install-btn').onclick = () => showQR(item);
+                
+                const deleteBtn = document.getElementById('delete-review-btn');
+                if (deleteBtn && myExistingReview) {
+                    deleteBtn.onclick = async () => {
+                        if (!confirm("Are you sure you want to delete your review?")) return;
+                        try {
+                            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reviews', myExistingReview.id));
+                        } catch(err) { console.error(err); }
+                    };
+                }
+
                 const reviewForm = document.getElementById('review-form');
                 if (reviewForm) {
                     reviewForm.onsubmit = async (e) => {
@@ -462,16 +478,25 @@
                         if (!rating) return;
                         
                         try {
-                            await addDoc(reviewsCol, {
-                                creationId: id,
-                                userId: currentUser.uid,
-                                userName: currentUser.displayName,
-                                userPhoto: currentUser.photoURL,
-                                rating: rating,
-                                comment: comment,
-                                createdAt: serverTimestamp()
-                            });
-                            renderDetails(id);
+                            if (myExistingReview) {
+                                // Update existing
+                                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reviews', myExistingReview.id), {
+                                    rating: rating,
+                                    comment: comment,
+                                    updatedAt: serverTimestamp()
+                                });
+                            } else {
+                                // Add new
+                                await addDoc(reviewsCol, {
+                                    creationId: id,
+                                    userId: currentUser.uid,
+                                    userName: currentUser.displayName,
+                                    userPhoto: currentUser.photoURL,
+                                    rating: rating,
+                                    comment: comment,
+                                    createdAt: serverTimestamp()
+                                });
+                            }
                         } catch(err) { console.error(err); }
                     };
                 }
