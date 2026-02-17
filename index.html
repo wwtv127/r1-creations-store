@@ -18,6 +18,15 @@
         .star-rating input { display: none; }
         .star-rating label { color: #333; cursor: pointer; font-size: 2rem; transition: color 0.2s; }
         .star-rating label:hover, .star-rating label:hover ~ label, .star-rating input:checked ~ label { color: #fe5000; }
+        
+        /* Visibility Radio Styling */
+        .visibility-label { transition: all 0.2s ease; border-width: 2px; }
+        input[name="visibility"]:checked + .visibility-label { 
+            background-color: #fe5000; 
+            border-color: #fe5000; 
+            color: white; 
+            box-shadow: 0 0 15px rgba(254, 80, 0, 0.3);
+        }
     </style>
 </head>
 <body class="text-gray-100">
@@ -122,16 +131,20 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1">Visibility *</label>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Visibility *</label>
                     <div class="grid grid-cols-2 gap-4">
-                        <label class="relative flex items-center justify-center p-3 border border-zinc-700 rounded-lg cursor-pointer hover:bg-zinc-800 transition peer-checked:bg-orange-600">
-                            <input type="radio" name="visibility" value="public" checked class="sr-only peer">
-                            <span class="text-sm font-medium text-gray-300">Public</span>
-                        </label>
-                        <label class="relative flex items-center justify-center p-3 border border-zinc-700 rounded-lg cursor-pointer hover:bg-zinc-800 transition peer-checked:bg-orange-600">
-                            <input type="radio" name="visibility" value="private" class="sr-only peer">
-                            <span class="text-sm font-medium text-gray-300">Private</span>
-                        </label>
+                        <div class="relative">
+                            <input type="radio" id="vis-public" name="visibility" value="public" checked class="sr-only">
+                            <label for="vis-public" class="visibility-label flex items-center justify-center p-3 border border-zinc-700 rounded-lg cursor-pointer hover:bg-zinc-800 text-gray-400 font-bold text-sm">
+                                Public
+                            </label>
+                        </div>
+                        <div class="relative">
+                            <input type="radio" id="vis-private" name="visibility" value="private" class="sr-only">
+                            <label for="vis-private" class="visibility-label flex items-center justify-center p-3 border border-zinc-700 rounded-lg cursor-pointer hover:bg-zinc-800 text-gray-400 font-bold text-sm">
+                                Private
+                            </label>
+                        </div>
                     </div>
                 </div>
 
