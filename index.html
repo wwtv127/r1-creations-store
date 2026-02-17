@@ -46,7 +46,7 @@
                             <img id="dropdown-avatar" src="" class="w-12 h-12 rounded-full mb-2 border border-zinc-700">
                             <p id="dropdown-name" class="text-sm font-bold text-white truncate w-full"></p>
                         </div>
-                        <button onclick="triggerLogout()" class="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-zinc-800 transition">
+                        <button onclick="confirmSignOut()" class="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-zinc-800 transition">
                             Sign Out
                         </button>
                     </div>
@@ -122,6 +122,21 @@
                 </div>
 
                 <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Visibility *</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <label class="relative flex items-center justify-center p-3 border border-zinc-700 rounded-lg cursor-pointer hover:bg-zinc-800 transition peer-checked:bg-orange-600">
+                            <input type="radio" name="visibility" value="public" checked class="sr-only peer">
+                            <span class="text-sm font-medium text-gray-300">Public</span>
+                        </label>
+                        <label class="relative flex items-center justify-center p-3 border border-zinc-700 rounded-lg cursor-pointer hover:bg-zinc-800 transition peer-checked:bg-orange-600">
+                            <input type="radio" name="visibility" value="private" class="sr-only peer">
+                            <span class="text-sm font-medium text-gray-300">Private</span>
+                        </label>
+                    </div>
+                    <p class="text-[10px] text-zinc-500 mt-1 uppercase tracking-wider">Private creations are only visible to you in "My Creations"</p>
+                </div>
+
+                <div>
                     <label class="block text-sm font-medium text-gray-300 mb-1">Short Description *</label>
                     <input type="text" id="form-short-desc" required class="w-full bg-black px-4 py-2 rounded-lg border border-zinc-700 text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition" placeholder="A unique experience for r1">
                 </div>
@@ -183,6 +198,18 @@
         </div>
     </div>
 
+    <!-- Sign Out Confirmation Modal -->
+    <div id="signout-modal" class="fixed inset-0 z-[110] hidden flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
+        <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center">
+            <h3 class="text-xl font-bold mb-4 text-white">Sign Out?</h3>
+            <p class="text-zinc-400 text-sm mb-8">Are you sure you want to sign out of RabbitCreations?</p>
+            <div class="flex gap-3">
+                <button onclick="triggerLogout()" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition">Sign Out</button>
+                <button onclick="toggleSignOutModal(false)" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 rounded-xl transition">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- QR Modal -->
     <div id="qr-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
         <div class="bg-zinc-900 rounded-3xl p-8 max-sm:w-full max-w-sm text-center shadow-2xl border border-zinc-800">
@@ -230,6 +257,7 @@
             let creations = [];
             let selectedCategory = 'All';
             let currentUser = null;
+            let intentToAdd = false; // Track if user wanted to add creation before login
 
             const creationsCol = collection(db, 'artifacts', appId, 'public', 'data', 'creations');
             const provider = new GoogleAuthProvider();
@@ -253,7 +281,14 @@
                     ddAvatar.src = user.photoURL;
                     ddName.innerText = user.displayName;
                     authorInput.value = user.displayName;
+                    
                     window.toggleAuthModal(false);
+                    
+                    // If they specifically clicked "Add Creation" earlier, go there.
+                    if (intentToAdd) {
+                        window.showView('add');
+                        intentToAdd = false;
+                    }
                 } else {
                     navMy.classList.add('hidden');
                     navLogin.classList.remove('hidden');
@@ -266,6 +301,17 @@
             window.toggleAuthModal = (show) => {
                 const modal = document.getElementById('auth-modal');
                 modal.classList.toggle('hidden', !show);
+                if (!show) intentToAdd = false; // Reset intent if they manually close
+            };
+
+            window.toggleSignOutModal = (show) => {
+                const modal = document.getElementById('signout-modal');
+                modal.classList.toggle('hidden', !show);
+            };
+
+            window.confirmSignOut = () => {
+                window.toggleProfileDropdown(); // Close menu
+                window.toggleSignOutModal(true);
             };
 
             window.toggleProfileDropdown = () => {
@@ -284,7 +330,6 @@
             window.triggerGoogleLogin = async () => {
                 try {
                     await signInWithPopup(auth, provider);
-                    window.showView('add');
                 } catch (err) {
                     console.error("Login failed", err);
                 }
@@ -293,6 +338,7 @@
             window.triggerLogout = async () => {
                 try {
                     await signOut(auth);
+                    window.toggleSignOutModal(false);
                     window.showView('home');
                 } catch (err) {
                     console.error("Logout failed", err);
@@ -301,6 +347,7 @@
 
             window.handleCreationAuth = () => {
                 if (!currentUser || currentUser.isAnonymous) {
+                    intentToAdd = true;
                     window.toggleAuthModal(true);
                 } else {
                     window.showView('add');
@@ -328,27 +375,36 @@
                 
                 if (!grid || !myGrid) return;
 
-                let filtered = selectedCategory === 'All' 
-                    ? creations 
-                    : creations.filter(c => c.category === selectedCategory);
+                // Home Grid: Show only PUBLIC items
+                let homeFiltered = creations.filter(c => c.visibility !== 'private');
+                if (selectedCategory !== 'All') {
+                    homeFiltered = homeFiltered.filter(c => c.category === selectedCategory);
+                }
 
-                grid.innerHTML = filtered.map(item => createCardHtml(item, false)).join('') || `<div class="col-span-full py-20 text-center text-gray-500 uppercase tracking-widest text-xs">No creations found</div>`;
+                grid.innerHTML = homeFiltered.map(item => createCardHtml(item, false)).join('') || 
+                    `<div class="col-span-full py-20 text-center text-gray-500 uppercase tracking-widest text-xs">No public creations found</div>`;
 
+                // My Creations Grid: Show EVERYTHING owned by the user (public or private)
                 if (currentUser && !currentUser.isAnonymous) {
                     const mine = creations.filter(c => c.userId === currentUser.uid);
-                    myGrid.innerHTML = mine.map(item => createCardHtml(item, true)).join('') || `<div class="col-span-full py-20 text-center text-gray-500 uppercase tracking-widest text-xs">You haven't published any creations yet</div>`;
+                    myGrid.innerHTML = mine.map(item => createCardHtml(item, true)).join('') || 
+                        `<div class="col-span-full py-20 text-center text-gray-500 uppercase tracking-widest text-xs">You haven't published any creations yet</div>`;
                 }
             }
 
             function createCardHtml(item, isManagement) {
+                const isPrivate = item.visibility === 'private';
                 return `
-                    <div onclick="showView('details', '${item.id}')" class="group cursor-pointer bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                    <div onclick="showView('details', '${item.id}')" class="group cursor-pointer bg-zinc-900 rounded-2xl border ${isPrivate ? 'border-orange-900/50' : 'border-zinc-800'} overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                         <div class="h-48 overflow-hidden bg-zinc-800 relative">
                             ${item.screenshotUrl 
                                 ? `<img src="${item.screenshotUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://via.placeholder.com/400x200?text=No+Preview'">`
                                 : `<div class="w-full h-full flex items-center justify-center text-white font-bold text-4xl" style="background: ${item.themeColor || '#fe5000'}">${item.title.charAt(0)}</div>`
                             }
-                            <div class="absolute top-3 left-3 px-3 py-1 bg-black/80 backdrop-blur rounded-full text-xs font-bold text-white border border-zinc-700 shadow-sm">${item.category}</div>
+                            <div class="absolute top-3 left-3 flex gap-2">
+                                <div class="px-3 py-1 bg-black/80 backdrop-blur rounded-full text-xs font-bold text-white border border-zinc-700 shadow-sm">${item.category}</div>
+                                ${isPrivate ? `<div class="px-3 py-1 bg-orange-600/90 backdrop-blur rounded-full text-[10px] font-black text-white uppercase tracking-tighter shadow-sm">Private</div>` : ''}
+                            </div>
                             ${isManagement ? `
                                 <button onclick="event.stopPropagation(); deleteCreation('${item.id}')" class="absolute top-3 right-3 p-2 bg-red-600/80 hover:bg-red-600 rounded-full text-white transition">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
@@ -396,7 +452,7 @@
                                         ${item.iconUrl ? `<img src="${item.iconUrl}" class="w-full h-full rounded-xl object-cover">` : `<div class="w-full h-full rounded-xl flex items-center justify-center text-4xl font-black" style="background:${item.themeColor}">${item.title[0]}</div>`}
                                     </div>
                                     <div class="pb-2">
-                                        <h2 class="text-3xl font-black leading-tight">${item.title}</h2>
+                                        <h2 class="text-3xl font-black leading-tight">${item.title} ${item.visibility === 'private' ? '<span class="text-xs bg-orange-600 px-2 py-0.5 rounded-md ml-2 align-middle">PRIVATE</span>' : ''}</h2>
                                         <p class="text-gray-300 font-medium">${item.category} • By ${item.author || 'Anonymous'}</p>
                                     </div>
                                 </div>
@@ -431,6 +487,8 @@
             document.getElementById('add-creation-form').onsubmit = async (e) => {
                 e.preventDefault();
                 const btn = e.target.querySelector('button[type="submit"]');
+                const visibility = e.target.querySelector('input[name="visibility"]:checked').value;
+                
                 btn.disabled = true; btn.innerText = "Publishing...";
                 try {
                     await addDoc(creationsCol, {
@@ -441,11 +499,17 @@
                         themeColor: document.getElementById('form-theme').value,
                         iconUrl: document.getElementById('form-icon').value,
                         screenshotUrl: document.getElementById('form-screenshot').value,
+                        visibility: visibility,
                         author: currentUser.displayName,
                         userId: currentUser.uid,
                         createdAt: serverTimestamp()
                     });
-                    e.target.reset(); showView('home');
+                    e.target.reset(); 
+                    if (visibility === 'private') {
+                        showView('my-creations');
+                    } else {
+                        showView('home');
+                    }
                 } catch (err) { console.error(err); } 
                 finally { btn.disabled = false; btn.innerText = "Publish Creation"; }
             };
